@@ -1,0 +1,19 @@
+[package]
+
+name = "i2cdev"
+version = "0.0.1"
+authors = ["Paul Osborne <osbpau@gmail.com>"]
+license = "MIT/Apache-2.0"
+repository = "https://github.com/posborne/rust-i2cdev"
+homepage = "https://github.com/posborne/rust-i2cdev"
+documentation = "http://posborne.github.io/rust-i2cdev"
+description = """
+Provides API for safe access to Linux i2c device interface.
+
+https://www.kernel.org/doc/Documentation/i2c/dev-interface
+"""
+
+[dependencies]
+libc = "*"
+bitflags = "*"
+nix = "^0.3.6"
