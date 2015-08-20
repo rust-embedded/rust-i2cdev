@@ -6,7 +6,10 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-// from include/uapi/linux/i2c.h
+use std::fs::File;
+use std::mem;
+use nix;
+use std::os::unix::prelude::*;
 
 /**
  * struct i2c_msg - an I2C transaction segment beginning with START
@@ -140,18 +143,24 @@ struct i2c_smbus_data {
     block: [u8; (I2C_SMBUS_BLOCK_MAX + 2) as usize],
 }
 
-const I2C_SMBUS_READ: u8 = 1;
-const I2C_SMBUS_WRITE: u8 = 0;
+#[repr(u8)]
+enum I2CSMBusReadWrite {
+    I2C_SMBUS_READ  = 1,
+    I2C_SMBUS_WRITE = 0,
+}
 
-const I2C_SMBUS_QUICK: u8 = 0;
-const I2C_SMBUS_BYTE: u8 = 1;
-const I2C_SMBUS_BYTE_DATA: u8 = 2;
-const I2C_SMBUS_WORD_DATA: u8 = 3;
-const I2C_SMBUS_PROC_CALL: u8 = 4;
-const I2C_SMBUS_BLOCK_DATA: u8 = 5;
-const I2C_SMBUS_I2C_BLOCK_BROKEN: u8 = 6;
-const I2C_SMBUS_BLOCK_PROC_CALL: u8 = 7; /* SMBus 2.0 */
-const I2C_SMBUS_I2C_BLOCK_DATA: u8 = 8;
+#[repr(u32)]
+enum I2CSMBusSize {
+    I2C_SMBUS_QUICK = 0,
+    I2C_SMBUS_BYTE = 1,
+    I2C_SMBUS_BYTE_DATA = 2,
+    I2C_SMBUS_WORD_DATA = 3,
+    I2C_SMBUS_PROC_CALL = 4,
+    I2C_SMBUS_BLOCK_DATA = 5,
+    I2C_SMBUS_I2C_BLOCK_BROKEN = 6,
+    I2C_SMBUS_BLOCK_PROC_CALL = 7, /* SMBus 2.0 */
+    I2C_SMBUS_I2C_BLOCK_DATA = 8,
+}
 
 // from include/uapi/linux/i2c-dev.h
 const I2C_RETRIES: u16 = 0x0701;
@@ -187,4 +196,77 @@ struct i2c_rdwr_ioctl_data {
     msgs: *mut i2c_msg,
     // __u32 nmsgs;
     nmsgs: u32,
+}
+
+/// Struct providing access to some I2C Bus
+///
+/// A single bus may have multiple devices on it.  The
+/// kernel exposes one device (e.g. `/dev/i2c-1`) per
+/// I2C bus that the system has access (and which is
+/// exposed to userspace).
+///
+/// The bus is the root for all operations and the device on
+/// which this code is operating is the master.
+pub struct I2CBus {
+    devfile: File
+}
+
+ioctl!(bad ioctl_set_i2c_slave_address with I2C_SLAVE);
+ioctl!(bad ioctl_i2c_smbus with I2C_SMBUS);
+
+unsafe fn i2c_smbus_access(
+    fd: RawFd,
+    read_write: I2CSMBusReadWrite,
+    command: u8, // can be address or something else
+    size: I2CSMBusSize,
+    data: *mut i2c_smbus_data)
+    -> Result<(), nix::Error>
+{
+    let mut args = i2c_smbus_ioctl_data {
+        read_write: read_write as u8,
+        command: command,
+        size: size as u32,
+        data: data,
+    };
+    
+    // remove type information
+    let p_args: *mut u8 = mem::transmute(&mut args);
+    try!(ioctl_i2c_smbus(fd, p_args));
+    Ok(())
+}
+
+unsafe fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
+    let mut data: i2c_smbus_data = mem::zeroed();
+    try!(i2c_smbus_access(fd,
+                          I2CSMBusReadWrite::I2C_SMBUS_READ,
+                          register,
+                          I2CSMBusSize::I2C_SMBUS_BYTE_DATA,
+                          &mut data));
+    Ok(data.block[0])
+}
+
+impl I2CBus {
+    pub fn new(devfile: File) -> I2CBus {
+        I2CBus { devfile: devfile }
+    }
+
+    /// Select the slave with the given address
+    ///
+    /// Typically the address is expected to be 7-bits but 10-bit addresses
+    /// may be supported by the kernel driver in some cases.  Little validation
+    /// is done in Rust as the kernel is good at making sure things are valid.
+    pub fn set_slave_address(&self, slave_address: u16) -> Result<(), nix::Error> {
+        try!(unsafe {
+            // NOTE: the generated ioctl call expected as pointer to a u8 but
+            // we just want to provide the u8 directly, so we just cast to a pointer.
+            // This is correct behavior.
+            ioctl_set_i2c_slave_address(self.devfile.as_raw_fd(), slave_address as *mut u8)
+        });
+        Ok(())
+    }
+
+    /// Perform an smbus read of an 8-bit register from the specified slave
+    pub fn smbus_read8(&self, register: u8) -> Result<u8, nix::Error> {
+        unsafe { i2c_smbus_read_byte_data(self.devfile.as_raw_fd(), register) }
+    }
 }

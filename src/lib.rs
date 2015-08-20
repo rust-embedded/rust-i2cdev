@@ -13,25 +13,9 @@
 //! kernel interface for interacting with i2c in userspace:
 //! https://www.kernel.org/doc/Documentation/i2c/dev-interface
 
-use std::fs::File;
-
 extern crate libc;
-extern crate nix;
+#[macro_use] extern crate nix;
+#[macro_use] extern crate bitflags;
 
-#[macro_use]
-extern crate bitflags;
-
-pub mod i2c_ioctl;
-
-/// Struct providing access to some I2C Bus
-///
-/// A single bus may have multiple devices on it.  The
-/// kernel exposes one device (e.g. `/dev/i2c-1`) per
-/// I2C bus that the system has access (and which is
-/// exposed to userspace).
-///
-/// The bus is the root for all operations.
-pub struct I2CBus {
-    devfile: File
-}
-
+mod i2c_ioctl;
+pub use i2c_ioctl::I2CBus;
