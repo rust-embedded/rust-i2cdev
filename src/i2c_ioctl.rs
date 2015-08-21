@@ -374,6 +374,17 @@ fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix::Er
     Ok((&data.block[1..(count + 1) as usize]).to_vec())
 }
 
+#[inline]
+fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
+    Ok(())  // TODO: implement me
+}
+
+#[inline]
+fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
+    Ok(()) // TODO: implement me
+}
+
+
 impl I2CBus {
     pub fn new(devfile: File) -> I2CBus {
         I2CBus { devfile: devfile }
@@ -453,4 +464,20 @@ impl I2CBus {
     pub fn smbus_read_block_data(&self, register: u8) -> Result<Vec<u8>, nix::Error> {
         i2c_smbus_read_block_data(self.devfile.as_raw_fd(), register)
     }
+
+    /// Write a block of up to 32 bytes to a device
+    ///
+    /// The opposite of the Block Read command, this writes up to 32 bytes to
+    /// a device, to a designated register that is specified through the
+    /// Comm byte. The amount of data is specified in the Count byte.
+    pub fn smbus_write_block_data(&self, register: u8, values: &[u8]) -> Result<(), nix::Error> {
+        i2c_smbus_write_block_data(self.devfile.as_raw_fd(), register, values)
+    }
+
+    /// Select a register, send 1 to 31 bytes of data to it, and reads
+    /// 1 to 31 bytes of data from it.
+    pub fn smbus_process_block(&self, register: u8, values: &[u8]) -> Result<(), nix::Error> {
+        i2c_smbus_write_i2c_block_data(self.devfile.as_raw_fd(), register, values)
+    }
+
 }
