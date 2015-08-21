@@ -144,6 +144,12 @@ struct i2c_smbus_data {
     block: [u8; (I2C_SMBUS_BLOCK_MAX + 2) as usize],
 }
 
+impl i2c_smbus_data {
+    fn empty() -> i2c_smbus_data {
+        unsafe { mem::zeroed() }
+    }
+}
+
 #[repr(u8)]
 enum I2CSMBusReadWrite {
     I2C_SMBUS_READ = 1,
@@ -247,9 +253,7 @@ fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), nix::Error> {
 
 #[inline]
 fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, nix::Error> {
-    let mut data: i2c_smbus_data = unsafe {
-        mem::zeroed()
-    };
+    let mut data = i2c_smbus_data::empty();
     try!(unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_READ,
@@ -273,9 +277,7 @@ fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), nix::Error> {
 
 #[inline]
 fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
-    let mut data: i2c_smbus_data = unsafe {
-        mem::zeroed()
-    };
+    let mut data = i2c_smbus_data::empty();
     try!(unsafe {
             i2c_smbus_access(fd,
                              I2CSMBusReadWrite::I2C_SMBUS_READ,
@@ -288,9 +290,7 @@ fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
 
 #[inline]
 fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), nix::Error> {
-    let mut data: i2c_smbus_data = unsafe {
-        mem::zeroed()
-    };
+    let mut data =  i2c_smbus_data::empty();
     data.block[0] = value;
     try!(unsafe {
         i2c_smbus_access(fd,
