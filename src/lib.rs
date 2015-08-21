@@ -18,6 +18,10 @@ extern crate libc;
 extern crate nix;
 #[macro_use]
 extern crate bitflags;
+extern crate byteorder;
 
 mod i2c_ioctl;
-pub use i2c_ioctl::I2CBus;
+
+pub use i2c_ioctl::{
+    I2CBus
+};

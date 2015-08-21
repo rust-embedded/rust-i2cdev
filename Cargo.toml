@@ -16,4 +16,5 @@ https://www.kernel.org/doc/Documentation/i2c/dev-interface
 [dependencies]
 libc = "*"
 bitflags = "*"
+byteorder = "*"
 nix = "^0.3.6"
