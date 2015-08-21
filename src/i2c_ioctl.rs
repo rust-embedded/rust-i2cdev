@@ -337,6 +337,25 @@ fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), 
     });
     Ok(())
 }
+
+#[inline]
+fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, nix::Error> {
+    let mut data = i2c_smbus_data::empty();
+    Cursor::new(&mut data.block[..])
+        .write_u16::<NativeEndian>(value)
+        .unwrap();
+
+    try!(unsafe {
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_WRITE,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_PROC_CALL,
+                         &mut data)
+    });
+    Ok(Cursor::new(&data.block[..])
+        .read_u16::<NativeEndian>()
+        .unwrap())
+}
 impl I2CBus {
     pub fn new(devfile: File) -> I2CBus {
         I2CBus { devfile: devfile }
@@ -401,5 +420,10 @@ impl I2CBus {
     /// Write 2 bytes to a given register on a device
     pub fn smbus_write_word_data(&self, register: u8, value: u16) -> Result<(), nix::Error> {
         i2c_smbus_write_word_data(self.devfile.as_raw_fd(), register, value)
+    }
+
+    /// Select a register, send 16 bits of data to it, and read 16 bits of data
+    pub fn smbus_process_word(&self, register: u8, value: u16) -> Result<u16, nix::Error> {
+        i2c_smbus_process_call(self.devfile.as_raw_fd(), register, value)
     }
 }
