@@ -9,8 +9,10 @@
 use std::fs::File;
 use std::mem;
 use std::ptr;
+use std::io::Cursor;
 use nix;
 use std::os::unix::prelude::*;
+use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 
 /**
  * struct i2c_msg - an I2C transaction segment beginning with START
@@ -302,6 +304,39 @@ fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), n
     Ok(())
 }
 
+#[inline]
+fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, nix::Error> {
+    let mut data = i2c_smbus_data::empty();
+    try!(unsafe {
+            i2c_smbus_access(fd,
+                             I2CSMBusReadWrite::I2C_SMBUS_READ,
+                             register,
+                             I2CSMBusSize::I2C_SMBUS_WORD_DATA,
+                             &mut data)
+    });
+
+    Ok(Cursor::new(&data.block[..])
+        .read_u16::<NativeEndian>()
+        .unwrap())
+}
+
+
+#[inline]
+fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), nix::Error> {
+    let mut data = i2c_smbus_data::empty();
+    Cursor::new(&mut data.block[..])
+        .write_u16::<NativeEndian>(value)
+        .unwrap();
+
+    try!(unsafe {
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_WRITE,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_WORD_DATA,
+                         &mut data)
+    });
+    Ok(())
+}
 impl I2CBus {
     pub fn new(devfile: File) -> I2CBus {
         I2CBus { devfile: devfile }
@@ -358,4 +393,13 @@ impl I2CBus {
         i2c_smbus_write_byte_data(self.devfile.as_raw_fd(), register, value)
     }
 
+    /// Read 2 bytes form a given register on a device
+    pub fn smbus_read_word_data(&self, register: u8) -> Result<u16, nix::Error> {
+        i2c_smbus_read_word_data(self.devfile.as_raw_fd(), register)
+    }
+
+    /// Write 2 bytes to a given register on a device
+    pub fn smbus_write_word_data(&self, register: u8, value: u16) -> Result<(), nix::Error> {
+        i2c_smbus_write_word_data(self.devfile.as_raw_fd(), register, value)
+    }
 }
