@@ -356,6 +356,24 @@ fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, ni
         .read_u16::<NativeEndian>()
         .unwrap())
 }
+
+#[inline]
+fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix::Error> {
+    let mut data = i2c_smbus_data::empty();
+    try!(unsafe {
+        i2c_smbus_access(fd,
+                 I2CSMBusReadWrite::I2C_SMBUS_READ,
+                 register,
+                 I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
+                 &mut data)
+    });
+
+    // create a vector from the data in the block starting at byte
+    // 1 and ending after count bytes after that
+    let count = data.block[0];
+    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+}
+
 impl I2CBus {
     pub fn new(devfile: File) -> I2CBus {
         I2CBus { devfile: devfile }
@@ -425,5 +443,14 @@ impl I2CBus {
     /// Select a register, send 16 bits of data to it, and read 16 bits of data
     pub fn smbus_process_word(&self, register: u8, value: u16) -> Result<u16, nix::Error> {
         i2c_smbus_process_call(self.devfile.as_raw_fd(), register, value)
+    }
+
+    /// Read a block of up to 32 bytes from a device
+    ///
+    /// The actual number of bytes available to read is returned in the count
+    /// byte.  This code returns a correctly sized vector containing the
+    /// count bytes read from the device.
+    pub fn smbus_read_block_data(&self, register: u8) -> Result<Vec<u8>, nix::Error> {
+        i2c_smbus_read_block_data(self.devfile.as_raw_fd(), register)
     }
 }
