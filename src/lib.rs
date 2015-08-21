@@ -14,8 +14,10 @@
 //! https://www.kernel.org/doc/Documentation/i2c/dev-interface
 
 extern crate libc;
-#[macro_use] extern crate nix;
-#[macro_use] extern crate bitflags;
+#[macro_use]
+extern crate nix;
+#[macro_use]
+extern crate bitflags;
 
 mod i2c_ioctl;
 pub use i2c_ioctl::I2CBus;
