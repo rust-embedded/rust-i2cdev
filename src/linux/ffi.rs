@@ -6,7 +6,6 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use std::fs::File;
 use std::mem;
 use std::ptr;
 use std::io::Cursor;
@@ -14,42 +13,6 @@ use nix;
 use std::os::unix::prelude::*;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 
-/**
- * struct i2c_msg - an I2C transaction segment beginning with START
- * @addr: Slave address, either seven or ten bits.  When this is a ten
- *     bit address, I2C_M_TEN must be set in @flags and the adapter
- *     must support I2C_FUNC_10BIT_ADDR.
- * @flags: I2C_M_RD is handled by all adapters.  No other flags may be
- *     provided unless the adapter exported the relevant I2C_FUNC_*
- *     flags through i2c_check_functionality().
- * @len: Number of data bytes in @buf being read from or written to the
- *     I2C slave address.  For read transactions where I2C_M_RECV_LEN
- *     is set, the caller guarantees that this buffer can hold up to
- *     32 bytes in addition to the initial length byte sent by the
- *     slave (plus, if used, the SMBus PEC); and this value will be
- *     incremented by the number of block data bytes received.
- * @buf: The buffer into which data is read, or from which it's written.
- *
- * An i2c_msg is the low level representation of one segment of an I2C
- * transaction.  It is visible to drivers in the @i2c_transfer() procedure,
- * to userspace from i2c-dev, and to I2C adapter drivers through the
- * @i2c_adapter.@master_xfer() method.
- *
- * Except when I2C "protocol mangling" is used, all I2C adapters implement
- * the standard rules for I2C transactions.  Each transaction begins with a
- * START.  That is followed by the slave address, and a bit encoding read
- * versus write.  Then follow all the data bytes, possibly including a byte
- * with SMBus PEC.  The transfer terminates with a NAK, or when all those
- * bytes have been transferred and ACKed.  If this is the last message in a
- * group, it is followed by a STOP.  Otherwise it is followed by the next
- * @i2c_msg transaction segment, beginning with a (repeated) START.
- *
- * Alternatively, when the adapter supports I2C_FUNC_PROTOCOL_MANGLING then
- * passing certain @flags may have changed those standard protocol behaviors.
- * Those flags are only for use with broken/nonconforming slaves, and with
- * adapters which are known to support the specific mangling options they
- * need (one or more of IGNORE_NAK, NO_RD_ACK, NOSTART, and REV_DIR_ADDR).
- */
 bitflags! {
     flags I2CMsgFlags: u16 {
         /// this is a ten bit chip address
@@ -72,6 +35,7 @@ bitflags! {
 }
 
 #[allow(non_camel_case_types)]
+#[allow(dead_code)]
 #[repr(C)]
 struct i2c_msg {
     /// slave address
@@ -152,12 +116,16 @@ impl i2c_smbus_data {
     }
 }
 
+#[allow(non_camel_case_types)]
+#[allow(dead_code)]
 #[repr(u8)]
 enum I2CSMBusReadWrite {
     I2C_SMBUS_READ = 1,
     I2C_SMBUS_WRITE = 0,
 }
 
+#[allow(non_camel_case_types)]
+#[allow(dead_code)]
 #[repr(u32)]
 enum I2CSMBusSize {
     I2C_SMBUS_QUICK = 0,
@@ -199,6 +167,7 @@ struct i2c_smbus_ioctl_data {
 
 /// This is the structure as used in the I2C_RDWR ioctl call
 #[allow(non_camel_case_types)]
+#[allow(dead_code)]
 #[repr(C)]
 struct i2c_rdwr_ioctl_data {
     // struct i2c_msg __user *msgs;
@@ -207,21 +176,18 @@ struct i2c_rdwr_ioctl_data {
     nmsgs: u32,
 }
 
-/// Struct providing access to some I2C Bus
-///
-/// A single bus may have multiple devices on it.  The
-/// kernel exposes one device (e.g. `/dev/i2c-1`) per
-/// I2C bus that the system has access (and which is
-/// exposed to userspace).
-///
-/// The bus is the root for all operations and the device on
-/// which this code is operating is the master.
-pub struct I2CBus {
-    devfile: File,
-}
-
 ioctl!(bad ioctl_set_i2c_slave_address with I2C_SLAVE);
 ioctl!(bad ioctl_i2c_smbus with I2C_SMBUS);
+
+pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
+    try!(unsafe {
+        // NOTE: the generated ioctl call expected as pointer to a u8 but
+        // we just want to provide the u8 directly, so we just cast to a pointer.
+        // This is correct behavior.
+        ioctl_set_i2c_slave_address(fd, slave_address as *mut u8)
+    });
+    Ok(())
+}
 
 unsafe fn i2c_smbus_access(fd: RawFd,
                            read_write: I2CSMBusReadWrite,
@@ -243,7 +209,7 @@ unsafe fn i2c_smbus_access(fd: RawFd,
 }
 
 #[inline]
-fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), nix::Error> {
     let read_write = match bit {
         true => I2CSMBusReadWrite::I2C_SMBUS_READ,
         false => I2CSMBusReadWrite::I2C_SMBUS_WRITE,
@@ -254,7 +220,7 @@ fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), nix::Error> {
 }
 
 #[inline]
-fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, nix::Error> {
+pub fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, nix::Error> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
         i2c_smbus_access(fd,
@@ -267,7 +233,7 @@ fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, nix::Error> {
 }
 
 #[inline]
-fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), nix::Error> {
     unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
@@ -278,7 +244,7 @@ fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), nix::Error> {
 }
 
 #[inline]
-fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
+pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
             i2c_smbus_access(fd,
@@ -291,7 +257,7 @@ fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
 }
 
 #[inline]
-fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), nix::Error> {
     let mut data =  i2c_smbus_data::empty();
     data.block[0] = value;
     try!(unsafe {
@@ -305,7 +271,7 @@ fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), n
 }
 
 #[inline]
-fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, nix::Error> {
+pub fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, nix::Error> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
             i2c_smbus_access(fd,
@@ -322,7 +288,7 @@ fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, nix::Error> 
 
 
 #[inline]
-fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), nix::Error> {
     let mut data = i2c_smbus_data::empty();
     Cursor::new(&mut data.block[..])
         .write_u16::<NativeEndian>(value)
@@ -339,7 +305,7 @@ fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), 
 }
 
 #[inline]
-fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, nix::Error> {
+pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, nix::Error> {
     let mut data = i2c_smbus_data::empty();
     Cursor::new(&mut data.block[..])
         .write_u16::<NativeEndian>(value)
@@ -358,7 +324,7 @@ fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, ni
 }
 
 #[inline]
-fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix::Error> {
+pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix::Error> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
         i2c_smbus_access(fd,
@@ -375,109 +341,11 @@ fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix::Er
 }
 
 #[inline]
-fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
     Ok(())  // TODO: implement me
 }
 
 #[inline]
-fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
     Ok(()) // TODO: implement me
-}
-
-
-impl I2CBus {
-    pub fn new(devfile: File) -> I2CBus {
-        I2CBus { devfile: devfile }
-    }
-
-    /// Select the slave with the given address
-    ///
-    /// Typically the address is expected to be 7-bits but 10-bit addresses
-    /// may be supported by the kernel driver in some cases.  Little validation
-    /// is done in Rust as the kernel is good at making sure things are valid.
-    pub fn set_slave_address(&self, slave_address: u16) -> Result<(), nix::Error> {
-        try!(unsafe {
-            // NOTE: the generated ioctl call expected as pointer to a u8 but
-            // we just want to provide the u8 directly, so we just cast to a pointer.
-            // This is correct behavior.
-            ioctl_set_i2c_slave_address(self.devfile.as_raw_fd(), slave_address as *mut u8)
-        });
-        Ok(())
-    }
-
-    /// This sends a single bit to the device, at the place of the Rd/Wr bit
-    pub fn smbus_write_quick(&self, bit: bool) -> Result<(), nix::Error> {
-        i2c_smbus_write_quick(self.devfile.as_raw_fd(), bit)
-    }
-
-    /// Read a single byte from a device, without specifying a device register
-    ///
-    /// Some devices are so simple that this interface is enough; for
-    /// others, it is a shorthand if you want to read the same register as in
-    /// the previous SMBus command.
-    pub fn smbus_read_byte(&self) -> Result<u8, nix::Error> {
-        i2c_smbus_read_byte(self.devfile.as_raw_fd())
-    }
-
-    /// Write a single byte to a sdevice, without specifying a device register
-    ///
-    /// This is the opposite operation as smbus_read_byte.  As with read_byte,
-    /// no register is specified.
-    pub fn smbus_write_byte(&self, value: u8) -> Result<(), nix::Error> {
-        i2c_smbus_write_byte(self.devfile.as_raw_fd(), value)
-    }
-
-    /// Read a single byte from a device, from a designated register
-    ///
-    /// The register is specified through the Comm byte.
-    pub fn smbus_read_byte_data(&self, register: u8) -> Result<u8, nix::Error> {
-        i2c_smbus_read_byte_data(self.devfile.as_raw_fd(), register)
-    }
-
-    /// Write a single byte to a specific register on a device
-    ///
-    /// The register is specified through the Comm byte.
-    pub fn smbus_write_byte_data(&self, register: u8, value: u8) -> Result<(), nix::Error> {
-        i2c_smbus_write_byte_data(self.devfile.as_raw_fd(), register, value)
-    }
-
-    /// Read 2 bytes form a given register on a device
-    pub fn smbus_read_word_data(&self, register: u8) -> Result<u16, nix::Error> {
-        i2c_smbus_read_word_data(self.devfile.as_raw_fd(), register)
-    }
-
-    /// Write 2 bytes to a given register on a device
-    pub fn smbus_write_word_data(&self, register: u8, value: u16) -> Result<(), nix::Error> {
-        i2c_smbus_write_word_data(self.devfile.as_raw_fd(), register, value)
-    }
-
-    /// Select a register, send 16 bits of data to it, and read 16 bits of data
-    pub fn smbus_process_word(&self, register: u8, value: u16) -> Result<u16, nix::Error> {
-        i2c_smbus_process_call(self.devfile.as_raw_fd(), register, value)
-    }
-
-    /// Read a block of up to 32 bytes from a device
-    ///
-    /// The actual number of bytes available to read is returned in the count
-    /// byte.  This code returns a correctly sized vector containing the
-    /// count bytes read from the device.
-    pub fn smbus_read_block_data(&self, register: u8) -> Result<Vec<u8>, nix::Error> {
-        i2c_smbus_read_block_data(self.devfile.as_raw_fd(), register)
-    }
-
-    /// Write a block of up to 32 bytes to a device
-    ///
-    /// The opposite of the Block Read command, this writes up to 32 bytes to
-    /// a device, to a designated register that is specified through the
-    /// Comm byte. The amount of data is specified in the Count byte.
-    pub fn smbus_write_block_data(&self, register: u8, values: &[u8]) -> Result<(), nix::Error> {
-        i2c_smbus_write_block_data(self.devfile.as_raw_fd(), register, values)
-    }
-
-    /// Select a register, send 1 to 31 bytes of data to it, and reads
-    /// 1 to 31 bytes of data from it.
-    pub fn smbus_process_block(&self, register: u8, values: &[u8]) -> Result<(), nix::Error> {
-        i2c_smbus_write_i2c_block_data(self.devfile.as_raw_fd(), register, values)
-    }
-
 }

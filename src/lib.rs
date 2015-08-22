@@ -13,15 +13,16 @@
 //! kernel interface for interacting with i2c in userspace:
 //! https://www.kernel.org/doc/Documentation/i2c/dev-interface
 
+#![crate_name = "i2cdev"]
+#![crate_type = "lib"]
+
 extern crate libc;
-#[macro_use]
-extern crate nix;
-#[macro_use]
-extern crate bitflags;
 extern crate byteorder;
+#[macro_use] extern crate bitflags;
+#[macro_use] extern crate nix;
 
-mod i2c_ioctl;
+pub use self::traits::*;
+pub use linux::*;
 
-pub use i2c_ioctl::{
-    I2CBus
-};
+mod linux;
+mod traits;
