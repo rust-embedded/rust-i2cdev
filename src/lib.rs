@@ -22,7 +22,7 @@ extern crate byteorder;
 #[macro_use] extern crate nix;
 
 pub use self::traits::*;
-pub use linux::*;
+pub use self::linux::*;
 
 mod linux;
 mod traits;

@@ -6,7 +6,7 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-pub use self::i2cdev::*;
-
 mod ffi;
 mod i2cdev;
+
+pub use self::i2cdev::*;

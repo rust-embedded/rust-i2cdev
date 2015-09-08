@@ -8,11 +8,51 @@
 
 use std::os::unix::prelude::*;
 use nix;
+use std::io;
+use std::io::prelude::*;
+use std::fs::OpenOptions;
+use std::fs::File;
+use std::path::Path;
 
 use ::linux::ffi;
 use ::{I2CSMBus, I2CMaster};
 
-impl I2CMaster for AsRawFd {
+pub struct I2CDevice {
+    devfile: File,
+}
+
+impl I2CDevice {
+    /// Create a new I2CDevice for the specified path
+    pub fn new<P: AsRef<Path>>(path: P) -> io::Result<I2CDevice> {
+        let file = try!(OpenOptions::new().read(true).write(true).open(path));
+        Ok(I2CDevice {
+            devfile: file,
+        })
+    }
+}
+
+impl AsRawFd for I2CDevice {
+    fn as_raw_fd(&self) -> RawFd {
+        self.devfile.as_raw_fd()
+    }
+}
+
+impl Read for I2CDevice {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.devfile.read(buf)
+    }
+}
+
+impl Write for I2CDevice {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.devfile.write(buf)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.devfile.flush()
+    }
+}
+
+impl I2CMaster for I2CDevice {
     /// Select the slave with the given address
     ///
     /// Typically the address is expected to be 7-bits but 10-bit addresses
@@ -23,7 +63,7 @@ impl I2CMaster for AsRawFd {
     }
 }
 
-impl I2CSMBus for AsRawFd {
+impl I2CSMBus for I2CDevice {
 
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
     fn smbus_write_quick(&self, bit: bool) -> Result<(), nix::Error> {
