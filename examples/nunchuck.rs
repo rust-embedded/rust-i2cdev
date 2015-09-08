@@ -12,14 +12,12 @@ extern crate i2cdev;
 extern crate docopt;
 
 use i2cdev::*;
-use std::os::unix::prelude::*;
 use std::io::prelude::*;
-use std::fs::File;
-use std::fs::OpenOptions;
 use std::env::args;
 use docopt::Docopt;
 use std::thread;
 
+const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 
 const USAGE: &'static str = "
 Reading Wii Nunchuck data via Linux i2cdev.
@@ -34,9 +32,34 @@ Options:
   --version    Show version.
 ";
 
-const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
+#[derive(Debug)]
+struct NunchuckReading {
+    joystick_x: u8,
+    joystick_y: u8,
+    accel_x: u16,  // 10-bit
+    accel_y: u16,  // 10-bit
+    accel_z: u16,  // 10-bit
+    c_button_pressed: bool,
+    z_button_pressed: bool,
+}
 
-fn read_nunchuck_data(dev: &mut I2CDevice) -> Result<(), &'static str> {
+impl NunchuckReading {
+    fn from_data(data: &[u8; 6]) -> NunchuckReading {
+        NunchuckReading {
+            joystick_x: data[0],
+            joystick_y: data[1],
+            accel_x: (data[2] as u16) << 2 | ((data[5] as u16 >> 6) & 0b11),
+            accel_y: (data[3] as u16) << 2 | ((data[5] as u16 >> 4) & 0b11),
+            accel_z: (data[4] as u16) << 2 | ((data[5] as u16 >> 2) & 0b11),
+            c_button_pressed: (data[5] & 0b10) == 0,
+            z_button_pressed: (data[5] & 0b01) == 0,
+        }
+    }
+}
+
+
+fn read_nunchuck_data(dev: &mut i2cdev::I2CDevice)
+                      -> Result<(), &'static str> {
     // Set the address of the device we are trying to talk to
     try!(dev.set_slave_address(NUNCHUCK_SLAVE_ADDR)
          .or_else(|_| Err("Could not set slave address")));
@@ -47,13 +70,16 @@ fn read_nunchuck_data(dev: &mut I2CDevice) -> Result<(), &'static str> {
     thread::sleep_ms(100);
 
     loop {
-        let mut buf: [u8; 6] = [0; 6];
-
-        // Prepare for read
         try!(dev.write_all(&[0x00]).or_else(|_| Err("Error preparing read")));
         thread::sleep_ms(10);
+
+        let mut buf: [u8; 6] = [0; 6];
         try!(match dev.read(&mut buf) {
-            Ok(size) => { println!("Reading: {:?}", buf);  Ok(()) },
+            Ok(_) => {
+                let reading = NunchuckReading::from_data(&buf);
+                println!("{:?}", reading);
+                Ok(())
+            }
             Err(_) => { Err("Error reading nunchuck data buffer") },
         });
     }
