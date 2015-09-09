@@ -13,6 +13,7 @@ use nix;
 use std::os::unix::prelude::*;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 
+#[allow(dead_code)]
 bitflags! {
     flags I2CMsgFlags: u16 {
         /// this is a ten bit chip address
@@ -48,6 +49,7 @@ struct i2c_msg {
     buf: *mut u8,
 }
 
+#[allow(dead_code)]
 bitflags! {
     flags I2CFunctions: u32 {
         const I2C_FUNC_I2C = 0x00000001,
@@ -140,16 +142,16 @@ enum I2CSMBusSize {
 }
 
 // from include/uapi/linux/i2c-dev.h
-const I2C_RETRIES: u16 = 0x0701;
-const I2C_TIMEOUT: u16 = 0x0702;
+//const I2C_RETRIES: u16 = 0x0701;
+//const I2C_TIMEOUT: u16 = 0x0702;
 const I2C_SLAVE: u16 = 0x0703;
-const I2C_SLAVE_FORCE: u16 = 0x0706;
-const I2C_TENBIT: u16 = 0x0704;
-const I2C_FUNCS: u16 = 0x0705;
-const I2C_RDWR: u16 = 0x0707;
-const I2C_PEC: u16 = 0x0708;
+//const I2C_SLAVE_FORCE: u16 = 0x0706;
+//const I2C_TENBIT: u16 = 0x0704;
+//const I2C_FUNCS: u16 = 0x0705;
+//const I2C_RDWR: u16 = 0x0707;
+//const I2C_PEC: u16 = 0x0708;
 const I2C_SMBUS: u16 = 0x0720;
-const I2C_RDRW_IOCTL_MAX_MSGS: u8 = 42;
+//const I2C_RDRW_IOCTL_MAX_MSGS: u8 = 42;
 
 /// This is the structure as used in the I2C_SMBUS ioctl call
 #[allow(non_camel_case_types)]
@@ -328,10 +330,10 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
         i2c_smbus_access(fd,
-                 I2CSMBusReadWrite::I2C_SMBUS_READ,
-                 register,
-                 I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
-                 &mut data)
+                         I2CSMBusReadWrite::I2C_SMBUS_READ,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
+                         &mut data)
     });
 
     // create a vector from the data in the block starting at byte
@@ -341,11 +343,39 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix
 }
 
 #[inline]
-pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
-    Ok(())  // TODO: implement me
+pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8])
+                                  -> Result<(), nix::Error> {
+    let mut data = i2c_smbus_data::empty();
+    let len: usize = if values.len() > 32 { 32 } else { values.len() };
+    data.block[0] = len as u8;
+    for i in 1..(len + 1) {
+        data.block[i] = values[i - 1];
+    }
+    try!(unsafe {
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_WRITE,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
+                         &mut data)
+    });
+    Ok(())
 }
 
 #[inline]
-pub fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), nix::Error> {
-    Ok(()) // TODO: implement me
+pub fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8])
+                                      -> Result<(), nix::Error> {
+    let mut data = i2c_smbus_data::empty();
+    let len: usize = if values.len() > 32 { 32 } else { values.len() };
+    data.block[0] = len as u8;
+    for i in 1..(len + 1) {
+        data.block[i] = values[i - 1];
+    }
+    try!(unsafe {
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_WRITE,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_I2C_BLOCK_DATA,
+                         &mut data)
+    });
+    Ok(())
 }
