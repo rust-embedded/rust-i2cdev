@@ -9,13 +9,13 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
+use core::*;
+use nix;
 use std::mem;
 use std::ptr;
 use std::io::Cursor;
-use nix;
 use std::os::unix::prelude::*;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use ::I2CError;
 
 bitflags! {
     flags I2CMsgFlags: u16 {

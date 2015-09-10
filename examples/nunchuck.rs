@@ -11,7 +11,7 @@
 extern crate i2cdev;
 extern crate docopt;
 
-use i2cdev::*;
+use i2cdev::core::*;
 use std::io::prelude::*;
 use std::env::args;
 use docopt::Docopt;
@@ -59,7 +59,6 @@ impl NunchuckReading {
     }
 }
 
-#[derive(Debug)]
 struct Nunchuck {
     i2cdev: I2CDevice,
 }
