@@ -50,7 +50,7 @@ fn i2cfun() -> Result<(), I2CError> {
 In addition to the Read/Write traits, the following methods are
 available via the I2CSMBus trait:
 
-```
+```rust
 pub trait I2CSMBus {
     fn smbus_write_quick(&self, bit: bool) -> Result<(), Error>;
     fn smbus_read_byte(&self) -> Result<u8, Error>;
