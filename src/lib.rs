@@ -26,15 +26,6 @@ mod core;
 
 pub use core::*;
 
-pub trait I2CMaster {
-    /// Select the slave with the given address
-    ///
-    /// Typically the address is expected to be 7-bits but 10-bit addresses
-    /// may be supported by the kernel driver in some cases.  Little validation
-    /// is done in Rust as the kernel is good at making sure things are valid.
-    fn set_slave_address(&self, slave_address: u16) -> Result<(), nix::Error>;
-}
-
 pub trait I2CSMBus {
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
     fn smbus_write_quick(&self, bit: bool) -> Result<(), nix::Error>;
