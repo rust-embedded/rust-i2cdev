@@ -1,0 +1,22 @@
+language: rust
+rust:
+  - 1.0.0
+  - 1.1.0
+  - 1.2.0
+  - beta
+  - nightly
+env:
+  global:
+    - secure: cJteZ1LbDExDnUMJqWrPQwHNWFDJOP5OH1zYX8j1nkJ91paDqBogCuHslooSDcrewnCmTLawv8na1KjGMZ2y3mwn26GhF5TfXsY+vHATIyex+z2fGOgCOlx47MSRdK7A30Pl66Ye/oboDX7iTqc+uzNucoutOB/ji4euD6wOu1g=
+script:
+  - cargo build --verbose
+  - cargo test --verbose
+  - cargo doc
+
+# Publish documentation on successfull master build
+# using the ghp-import python package
+after_success: ! '[ $TRAVIS_BRANCH = master ] && [ $TRAVIS_PULL_REQUEST = false ]
+  && echo "<meta http-equiv=refresh content=0;url=i2cdev/index.html>" > target/doc/index.html
+  && sudo pip install ghp-import
+  && ghp-import -n target/doc
+  && git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages'
