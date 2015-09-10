@@ -14,21 +14,56 @@ use std::fs::OpenOptions;
 use std::fs::File;
 use std::path::Path;
 
-use ::linux::ffi;
-use ::{I2CSMBus, I2CMaster};
+use ::{ffi, I2CSMBus, I2CMaster};
 
+#[derive(Debug)]
 pub struct I2CDevice {
     devfile: File,
+    slave_address: u16,
+}
+
+#[derive(Debug)]
+pub enum I2CDeviceOpenError {
+    IOError(io::Error),
+    NixError(nix::Error),
 }
 
 impl I2CDevice {
     /// Create a new I2CDevice for the specified path
-    pub fn new<P: AsRef<Path>>(path: P) -> io::Result<I2CDevice> {
-        let file = try!(OpenOptions::new().read(true).write(true).open(path));
-        Ok(I2CDevice {
+    pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) ->
+        Result<I2CDevice, I2CDeviceOpenError>
+    {
+        let file = try!(OpenOptions::new()
+                        .read(true)
+                        .write(true)
+                        .open(path)
+                        .or_else(|e| Err(I2CDeviceOpenError::IOError(e))));
+        let mut device = I2CDevice {
             devfile: file,
-        })
+            slave_address: 0, // will be set later
+        };
+        try!(device.set_slave_address(slave_address)
+             .or_else(|e| Err(I2CDeviceOpenError::NixError(e))));
+        Ok(device)
     }
+
+    /// Set the slave address for this device
+    ///
+    /// Typically the address is expected to be 7-bits but 10-bit addresses
+    /// may be supported by the kernel driver in some cases.  Little validation
+    /// is done in Rust as the kernel is good at making sure things are valid.
+    ///
+    /// Note that if you have created a device using
+    /// `I2Device::new(...)` it is not necesasry to call this method
+    /// (it is done internally).  Calling this method is only
+    /// necessary if you need to change the slave device and you do
+    /// not want to create a new device.
+    fn set_slave_address(&mut self, slave_address: u16) -> Result<(), nix::Error> {
+        try!(ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address));
+        self.slave_address = slave_address;
+        Ok(())
+    }
+
 }
 
 impl AsRawFd for I2CDevice {
@@ -49,17 +84,6 @@ impl Write for I2CDevice {
     }
     fn flush(&mut self) -> io::Result<()> {
         self.devfile.flush()
-    }
-}
-
-impl I2CMaster for I2CDevice {
-    /// Select the slave with the given address
-    ///
-    /// Typically the address is expected to be 7-bits but 10-bit addresses
-    /// may be supported by the kernel driver in some cases.  Little validation
-    /// is done in Rust as the kernel is good at making sure things are valid.
-    fn set_slave_address(&self, slave_address: u16) -> Result<(), nix::Error> {
-        ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address)
     }
 }
 

@@ -6,6 +6,9 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(dead_code)]
+#![allow(non_camel_case_types)]
+
 use std::mem;
 use std::ptr;
 use std::io::Cursor;
@@ -13,7 +16,6 @@ use nix;
 use std::os::unix::prelude::*;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 
-#[allow(dead_code)]
 bitflags! {
     flags I2CMsgFlags: u16 {
         /// this is a ten bit chip address
@@ -35,8 +37,6 @@ bitflags! {
     }
 }
 
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
 #[repr(C)]
 struct i2c_msg {
     /// slave address
@@ -49,7 +49,6 @@ struct i2c_msg {
     buf: *mut u8,
 }
 
-#[allow(dead_code)]
 bitflags! {
     flags I2CFunctions: u32 {
         const I2C_FUNC_I2C = 0x00000001,
@@ -106,7 +105,6 @@ const I2C_SMBUS_BLOCK_MAX: u8 = 32;
 //     __u8 block[I2C_SMBUS_BLOCK_MAX + 2]; /* block[0] is used for length */
 //                            /* and one more for user-space compatibility */
 // };
-#[allow(non_camel_case_types)]
 #[repr(C)]
 struct i2c_smbus_data {
     block: [u8; (I2C_SMBUS_BLOCK_MAX + 2) as usize],
@@ -118,16 +116,12 @@ impl i2c_smbus_data {
     }
 }
 
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
 #[repr(u8)]
 enum I2CSMBusReadWrite {
     I2C_SMBUS_READ = 1,
     I2C_SMBUS_WRITE = 0,
 }
 
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
 #[repr(u32)]
 enum I2CSMBusSize {
     I2C_SMBUS_QUICK = 0,
@@ -142,19 +136,18 @@ enum I2CSMBusSize {
 }
 
 // from include/uapi/linux/i2c-dev.h
-//const I2C_RETRIES: u16 = 0x0701;
-//const I2C_TIMEOUT: u16 = 0x0702;
+const I2C_RETRIES: u16 = 0x0701;
+const I2C_TIMEOUT: u16 = 0x0702;
 const I2C_SLAVE: u16 = 0x0703;
-//const I2C_SLAVE_FORCE: u16 = 0x0706;
-//const I2C_TENBIT: u16 = 0x0704;
-//const I2C_FUNCS: u16 = 0x0705;
-//const I2C_RDWR: u16 = 0x0707;
-//const I2C_PEC: u16 = 0x0708;
+const I2C_SLAVE_FORCE: u16 = 0x0706;
+const I2C_TENBIT: u16 = 0x0704;
+const I2C_FUNCS: u16 = 0x0705;
+const I2C_RDWR: u16 = 0x0707;
+const I2C_PEC: u16 = 0x0708;
 const I2C_SMBUS: u16 = 0x0720;
-//const I2C_RDRW_IOCTL_MAX_MSGS: u8 = 42;
+const I2C_RDRW_IOCTL_MAX_MSGS: u8 = 42;
 
 /// This is the structure as used in the I2C_SMBUS ioctl call
-#[allow(non_camel_case_types)]
 #[repr(C)]
 struct i2c_smbus_ioctl_data {
     // __u8 read_write;
@@ -168,8 +161,6 @@ struct i2c_smbus_ioctl_data {
 }
 
 /// This is the structure as used in the I2C_RDWR ioctl call
-#[allow(non_camel_case_types)]
-#[allow(dead_code)]
 #[repr(C)]
 struct i2c_rdwr_ioctl_data {
     // struct i2c_msg __user *msgs;
