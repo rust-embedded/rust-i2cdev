@@ -15,6 +15,7 @@ use std::io::Cursor;
 use nix;
 use std::os::unix::prelude::*;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
+use ::I2CError;
 
 bitflags! {
     flags I2CMsgFlags: u16 {
@@ -187,7 +188,7 @@ unsafe fn i2c_smbus_access(fd: RawFd,
                            command: u8, // can be address or something else
                            size: I2CSMBusSize,
                            data: *mut i2c_smbus_data)
-                           -> Result<(), nix::Error> {
+                           -> Result<(), I2CError> {
     let mut args = i2c_smbus_ioctl_data {
         read_write: read_write as u8,
         command: command,
@@ -197,12 +198,13 @@ unsafe fn i2c_smbus_access(fd: RawFd,
 
     // remove type information
     let p_args: *mut u8 = mem::transmute(&mut args);
-    try!(ioctl_i2c_smbus(fd, p_args));
+    try!(ioctl_i2c_smbus(fd, p_args)
+         .or_else(|e| Err(I2CError::from(e))));
     Ok(())
 }
 
 #[inline]
-pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), I2CError> {
     let read_write = match bit {
         true => I2CSMBusReadWrite::I2C_SMBUS_READ,
         false => I2CSMBusReadWrite::I2C_SMBUS_WRITE,
@@ -213,7 +215,7 @@ pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), nix::Error> {
 }
 
 #[inline]
-pub fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, nix::Error> {
+pub fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, I2CError> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
         i2c_smbus_access(fd,
@@ -226,7 +228,7 @@ pub fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, nix::Error> {
 }
 
 #[inline]
-pub fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), I2CError> {
     unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
@@ -237,7 +239,7 @@ pub fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), nix::Error> {
 }
 
 #[inline]
-pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Error> {
+pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, I2CError> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
             i2c_smbus_access(fd,
@@ -250,7 +252,7 @@ pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, nix::Erro
 }
 
 #[inline]
-pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), I2CError> {
     let mut data =  i2c_smbus_data::empty();
     data.block[0] = value;
     try!(unsafe {
@@ -264,7 +266,7 @@ pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(
 }
 
 #[inline]
-pub fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, nix::Error> {
+pub fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, I2CError> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
             i2c_smbus_access(fd,
@@ -281,7 +283,7 @@ pub fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, nix::Err
 
 
 #[inline]
-pub fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), nix::Error> {
+pub fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<(), I2CError> {
     let mut data = i2c_smbus_data::empty();
     Cursor::new(&mut data.block[..])
         .write_u16::<NativeEndian>(value)
@@ -298,7 +300,7 @@ pub fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<
 }
 
 #[inline]
-pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, nix::Error> {
+pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16, I2CError> {
     let mut data = i2c_smbus_data::empty();
     Cursor::new(&mut data.block[..])
         .write_u16::<NativeEndian>(value)
@@ -317,7 +319,7 @@ pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16
 }
 
 #[inline]
-pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix::Error> {
+pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, I2CError> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
         i2c_smbus_access(fd,
@@ -335,7 +337,7 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, nix
 
 #[inline]
 pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8])
-                                  -> Result<(), nix::Error> {
+                                  -> Result<(), I2CError> {
     let mut data = i2c_smbus_data::empty();
     let len: usize = if values.len() > 32 { 32 } else { values.len() };
     data.block[0] = len as u8;
@@ -354,7 +356,7 @@ pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8])
 
 #[inline]
 pub fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8])
-                                      -> Result<(), nix::Error> {
+                                      -> Result<(), I2CError> {
     let mut data = i2c_smbus_data::empty();
     let len: usize = if values.len() > 32 { 32 } else { values.len() };
     data.block[0] = len as u8;

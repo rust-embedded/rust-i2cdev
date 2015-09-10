@@ -60,58 +60,58 @@ impl NunchuckReading {
 }
 
 #[derive(Debug)]
-struct WiiNunchuck {
+struct Nunchuck {
     i2cdev: I2CDevice,
 }
 
 #[derive(Debug)]
-enum WiiNunchuckOpenError {
-    InitError(WiiNunchuckInitError),
-    DeviceOpenError(I2CDeviceOpenError),
+enum NunchuckOpenError {
+    InitError(NunchuckInitError),
+    I2CError(I2CError),
 }
 
 #[derive(Debug)]
-enum WiiNunchuckInitError {
+enum NunchuckInitError {
     WriteFailed,
 }
 
 #[derive(Debug)]
-enum WiiNunchuckReadError {
+enum NunchuckReadError {
     IOError(io::Error),
 }
 
-impl WiiNunchuck {
+impl Nunchuck {
     /// Create a new Wii Nunchuck
     ///
     /// This method will open the provide i2c device file and will
     /// send the required init sequence in order to read data in
     /// the future.
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<WiiNunchuck, WiiNunchuckOpenError> {
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<Nunchuck, NunchuckOpenError> {
         let i2cdev = try!(I2CDevice::new(path, NUNCHUCK_SLAVE_ADDR)
-                          .or_else(|e| Err(WiiNunchuckOpenError::DeviceOpenError(e))));
-        let mut nunchuck = WiiNunchuck { i2cdev: i2cdev };
-        try!(nunchuck.init().or_else(|e| Err(WiiNunchuckOpenError::InitError(e))));
+                          .or_else(|e| Err(NunchuckOpenError::I2CError(e))));
+        let mut nunchuck = Nunchuck { i2cdev: i2cdev };
+        try!(nunchuck.init().or_else(|e| Err(NunchuckOpenError::InitError(e))));
         Ok(nunchuck)
     }
 
     /// Send the init sequence to the Wii Nunchuck
-    pub fn init(&mut self) -> Result<(), WiiNunchuckInitError> {
+    pub fn init(&mut self) -> Result<(), NunchuckInitError> {
         try!(self.i2cdev.write_all(&[0xF0, 0x55])
-             .or_else(|_| Err(WiiNunchuckInitError::WriteFailed)));
+             .or_else(|_| Err(NunchuckInitError::WriteFailed)));
         try!(self.i2cdev.write_all(&[0xFB, 0x00])
-             .or_else(|_| Err(WiiNunchuckInitError::WriteFailed)));
+             .or_else(|_| Err(NunchuckInitError::WriteFailed)));
         thread::sleep_ms(100);
         Ok(())
     }
 
-    pub fn read(&mut self) -> Result<NunchuckReading, WiiNunchuckReadError> {
+    pub fn read(&mut self) -> Result<NunchuckReading, NunchuckReadError> {
         let mut buf: [u8; 6] = [0; 6];
         try!(self.i2cdev.write_all(&[0x00])
-             .or_else(|e| Err(WiiNunchuckReadError::IOError(e))));
+             .or_else(|e| Err(NunchuckReadError::IOError(e))));
         thread::sleep_ms(10);
         match self.i2cdev.read(&mut buf) {
             Ok(_len) => Ok(NunchuckReading::from_data(&buf)),
-            Err(err) => Err(WiiNunchuckReadError::IOError(err)),
+            Err(err) => Err(NunchuckReadError::IOError(err)),
         }
     }
 }
@@ -121,7 +121,7 @@ fn main() {
         .and_then(|d| d.argv(args().into_iter()).parse())
         .unwrap_or_else(|e| e.exit());
     let device = args.get_str("<device>");
-    match WiiNunchuck::new(device) {
+    match Nunchuck::new(device) {
         Err(err) => { println!("Unable to open {:?}, {:?}", device, err); }
         Ok(mut nunchuck) => {
             loop {
