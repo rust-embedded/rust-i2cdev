@@ -23,3 +23,4 @@ extern crate byteorder;
 
 mod ffi;
 pub mod core;
+pub mod smbus;

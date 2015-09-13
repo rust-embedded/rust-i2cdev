@@ -1,5 +1,6 @@
 use ffi;
 use core::*;
+use std::os::unix::prelude::*;
 
 pub trait I2CSMBus {
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
