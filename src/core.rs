@@ -23,9 +23,17 @@ pub enum I2CError {
     NixError(nix::Error),
 }
 
+pub type I2CResult<T> = Result<T, I2CError>;
+
 impl convert::From<nix::Error> for I2CError {
     fn from(e: nix::Error) -> I2CError {
         I2CError::NixError(e)
+    }
+}
+
+impl convert::From<io::Error> for I2CError {
+    fn from(e: io::Error) -> I2CError {
+        I2CError::IOError(e)
     }
 }
 
@@ -42,9 +50,7 @@ pub enum I2CDeviceOpenError {
 
 impl I2CDevice {
     /// Create a new I2CDevice for the specified path
-    pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) ->
-        Result<I2CDevice, I2CError>
-    {
+    pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) -> I2CResult<I2CDevice> {
         let file = try!(OpenOptions::new()
                         .read(true)
                         .write(true)
@@ -69,7 +75,7 @@ impl I2CDevice {
     /// (it is done internally).  Calling this method is only
     /// necessary if you need to change the slave device and you do
     /// not want to create a new device.
-    fn set_slave_address(&mut self, slave_address: u16) -> Result<(), I2CError> {
+    fn set_slave_address(&mut self, slave_address: u16) -> I2CResult<()> {
         try!(ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address));
         self.slave_address = slave_address;
         Ok(())
