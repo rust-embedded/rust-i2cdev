@@ -13,7 +13,7 @@ pub trait I2CSMBus {
     /// the previous SMBus command.
     fn smbus_read_byte(&self) -> I2CResult<u8>;
 
-    /// Write a single byte to a sdevice, without specifying a device register
+    /// Write a single byte to a device, without specifying a device register
     ///
     /// This is the opposite operation as smbus_read_byte.  As with read_byte,
     /// no register is specified.
