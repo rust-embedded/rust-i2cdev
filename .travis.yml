@@ -1,22 +1,18 @@
 language: rust
 rust:
-  - 1.0.0
-  - 1.1.0
-  - 1.2.0
-  - beta
-  - nightly
+- 1.0.0
+- 1.1.0
+- 1.2.0
+- beta
+- nightly
 env:
   global:
-    - secure: "F1rRibiryahZIdzQKI6/YUFs+oZ15W0NlD6V6IctjtjzWPm83Bjz68q4sFmknFuV8f1A921+O6KoKR60CTYz89U/Q33xH8uVQyjBedpvIEcnJ7zwp4MJQMgTgIaAnVQ3qgfF7D39lij+OKaj1FxF+yomcmIoKq7KFw9Zgp1CxYyhH4pWNaowtNAVDFx2FKcTOFaMLf5uoyw3MhXN0lE0LcBPgFJZ6i+1to/EHawp0mYgQYLcW7/kxQ/SKLgdBPFErealh0I/uXXDepz0htdkaO9oSMuOEHfdF5K/L5ni4hzGMaaUGekLo/IzT+pf1n/jQVrAElxF3iqv8pCJsb09eNg0hDazF2rvjE5EqsvRE4TJhP/FLVJgS3+8PXTUbHzcclp+yuhlo1fKMJDYqOG2knD9pBUzO+NBcr+oS9ryGtZ2c0kkfI7WgBr43XwDulpSQT9RMhoZVhvn6Sb7bP0b3fbtlujebHKDM1uiinRiwSo0plm9LZuxsjWduLMxqiINBBm5xDnpNE9+YkAIucXAusKubUQavj0C8dMgXSfmYlNSVHK+0eDZFWEXPQ/FIZ6a2KuC8nZNbiixwF+WGtEIKXxGLyb+mavRINYucIAMlTGTUEfg0HTeCkUC02480cc20irFzhDUEYqUgYa5UaH/fYUg7SyXfnwWJYIvF+D1RV8="
+  - secure: gZdvTl4i1QfHQaCUPcVpnLtlrsE4WldSm99AD9C9jiMgjlzhhI4kQmIhssNFhA1BWDW6qDazrKnw4ZT1GA/rlmGSpLxs2lfBNTjPF0CJMVSTEQ1OaFcDGajziTTCSMh7jDml1/CFHuGSc+rS4bNv5wu0bj+pz3ZSRSuB7Vgoa0aRD8JQKc+phnIoXMCCfIh9vxlXWvO9mDMoR84/B35/gN/vWIi3+uuHgvvdKMK8qBbJ0ne25kOIA5CpXzJmOBFHCGblVQM4+AiTWvWtoXJjMcJXn9HZ2g3HWhrnixG07Ee1RrjUPo25tsxrBowHSGq9Bbo+jzmOmx03CRnCBHyXk6e12MXrfVFWRdmFaf7Sl/RBlz8Y2BRgktp8ihB6JQmjNuRptE4RdnWn6CU9liSQ5nzzGEl2ZtBrzN9GR3qyhq5W9e09v93MZfBr0svp/rtBoqDANfkpxvmWqtgO3fjN1fdf092sEcQfq3d7e6NaLSWKkI6V9wJnJ9UulPDAaqGVm8RrA9b0vJR6ouCf5ChZgYirz6LW5uPpMkf+cjESU9JxnX9xVB8tfPSoNrPKolRC/WRZ8gPbRmx0vF4wrDk8z9Fks5nHGwDsPdYe60Qe8m6ZclncCkpUzy2yAZWe/kiDaseOwNbSqEUZW80hLyHpuGi1IFpGBQfc8mYMPvqOHa8=
 script:
-  - cargo build --verbose
-  - cargo test --verbose
-  - cargo doc
-
-# Publish documentation on successfull master build
-# using the ghp-import python package
-after_success: ! '[ $TRAVIS_BRANCH = master ] && [ $TRAVIS_PULL_REQUEST = false ]
-  && echo "<meta http-equiv=refresh content=0;url=i2cdev/index.html>" > target/doc/index.html
-  && sudo pip install ghp-import
-  && ghp-import -n target/doc
-  && git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages'
+- cargo build --verbose
+- cargo test --verbose
+- cargo doc
+after_success: '[ $TRAVIS_BRANCH = master ] && [ $TRAVIS_PULL_REQUEST = false ] &&
+  echo "<meta http-equiv=refresh content=0;url=i2cdev/index.html>" > target/doc/index.html
+  && sudo pip install ghp-import && ghp-import -n target/doc && git push -fq https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git
+  gh-pages'
