@@ -34,8 +34,8 @@ const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 // real code should not use unwrap() so liberally
 fn i2cfun() -> Result<(), I2CError> {
     let mut dev = try!(I2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR));
-    self.i2cdev.write_all(&[0xF0, 0x55]).unwrap();
-    self.i2cdev.write_all(&[0xFB, 0x00]).unwrap();
+    try!(self.i2cdev.smbus_write_byte_data(0xF0, 0x55));
+    try!(self.i2cdev-smbus_write_byte_data(0xFB, 0x00))
     thread::sleep_ms(100);
     loop {
         let mut buf: [u8: 6] = [0: 6];
@@ -74,7 +74,10 @@ The following features are implemented and planned for the library:
 - [x] Implement the Read trait
 - [x] Implement the Write trait
 - [x] Implement SMBus Methods
-- [ ] Add Tests/Example for SMBus Methods
+- [x] Add Tests/Example for SMBus Methods
+- [/] Add sensor library for handy sensors (and examples)
+- [ ] Add higher-level APIs/Macros for simplifying access to devices
+      with large register sets
 - [ ] Add Support for Non-SMBus ioctl methods
 - [ ] Add examples for non-smbus ioctl methods
 - [ ] Unit Testing
