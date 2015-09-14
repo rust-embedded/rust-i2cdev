@@ -7,7 +7,7 @@ rust:
   - nightly
 env:
   global:
-    - secure: cJteZ1LbDExDnUMJqWrPQwHNWFDJOP5OH1zYX8j1nkJ91paDqBogCuHslooSDcrewnCmTLawv8na1KjGMZ2y3mwn26GhF5TfXsY+vHATIyex+z2fGOgCOlx47MSRdK7A30Pl66Ye/oboDX7iTqc+uzNucoutOB/ji4euD6wOu1g=
+    - secure: "F1rRibiryahZIdzQKI6/YUFs+oZ15W0NlD6V6IctjtjzWPm83Bjz68q4sFmknFuV8f1A921+O6KoKR60CTYz89U/Q33xH8uVQyjBedpvIEcnJ7zwp4MJQMgTgIaAnVQ3qgfF7D39lij+OKaj1FxF+yomcmIoKq7KFw9Zgp1CxYyhH4pWNaowtNAVDFx2FKcTOFaMLf5uoyw3MhXN0lE0LcBPgFJZ6i+1to/EHawp0mYgQYLcW7/kxQ/SKLgdBPFErealh0I/uXXDepz0htdkaO9oSMuOEHfdF5K/L5ni4hzGMaaUGekLo/IzT+pf1n/jQVrAElxF3iqv8pCJsb09eNg0hDazF2rvjE5EqsvRE4TJhP/FLVJgS3+8PXTUbHzcclp+yuhlo1fKMJDYqOG2knD9pBUzO+NBcr+oS9ryGtZ2c0kkfI7WgBr43XwDulpSQT9RMhoZVhvn6Sb7bP0b3fbtlujebHKDM1uiinRiwSo0plm9LZuxsjWduLMxqiINBBm5xDnpNE9+YkAIucXAusKubUQavj0C8dMgXSfmYlNSVHK+0eDZFWEXPQ/FIZ6a2KuC8nZNbiixwF+WGtEIKXxGLyb+mavRINYucIAMlTGTUEfg0HTeCkUC02480cc20irFzhDUEYqUgYa5UaH/fYUg7SyXfnwWJYIvF+D1RV8="
 script:
   - cargo build --verbose
   - cargo test --verbose
