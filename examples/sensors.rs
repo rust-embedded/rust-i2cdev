@@ -15,10 +15,9 @@ extern crate i2cdev;
 extern crate docopt;
 
 use std::thread;
-use std::io::prelude::*;
 use std::env::args;
 use docopt::Docopt;
-use i2cdev::sensors::Thermometer;
+use i2cdev::sensors::{Thermometer, Barometer};
 use i2cdev::sensors::mpl115a2_barometer::*;
 
 const USAGE: &'static str = "
@@ -43,6 +42,7 @@ fn main() {
     let mut mpl115a2 = MPL115A2BarometerThermometer::new(device).unwrap();
     loop {
         println!("Temperature: {:?} C", mpl115a2.temperature_celsius());
+        println!("Pressure:    {:?} kPa", mpl115a2.pressure_kpa());
         thread::sleep_ms(1000);
     }
 }

@@ -13,6 +13,8 @@ use std::io::prelude::*;
 use core::{I2CDevice, I2CResult, I2CError};
 use smbus::I2CSMBus;
 use std::path::Path;
+use byteorder::{ByteOrder, BigEndian};
+
 
 const SLAVE_ADDR: u16 = 0x60; // appears to always be this
 const REGISTER_ADDR_PADC: u8 = 0x00;
@@ -39,6 +41,7 @@ pub struct MPL115A2BarometerThermometer {
 ///
 /// One use case for use of this struct directly would be for
 /// getting both temperature and pressure in a single call.
+#[derive(Debug)]
 pub struct MPL115A2RawReading {
     padc: u16, // 10-bit pressure ADC output value
     tadc: u16, // 10-bit pressure ADC output value
@@ -51,6 +54,7 @@ pub struct MPL115A2RawReading {
 /// necessary to read these coefficients once per interaction
 /// with the acclerometer.  It does not need to be read again
 /// on each sample.
+#[derive(Debug)]
 pub struct MPL115A2Coefficients {
     a0: f32, // 16 bits, 1 sign, 12 int, 3 fractional, 0 dec pt 0 pad
     b1: f32, // 16 bits, 1 sign, 2 int, 13 fractional, 0 dec pt 0 pad
@@ -60,14 +64,14 @@ pub struct MPL115A2Coefficients {
 
 fn calc_coefficient(msb: u8,
                     lsb: u8,
+                    integer_bits: i32,
                     fractional_bits: i32,
                     dec_pt_zero_pad: i32) -> f32 {
-    // the proper adjustments can be made by multiplying the full signed
-    // integral value by 2 ^ (float bits + decimal padding)
-    let rawval: u16 = ((msb as u16) << 8) | lsb as u16;
-    let nonsign: f32 = (rawval & !0x8000) as f32;
-    let sign: f32 = if rawval & 0x8000 == 0 { 1.0 } else { -1.0 };
-    (sign * nonsign / 2_f32.powi(fractional_bits)) / 10_f32.powi(dec_pt_zero_pad)
+    // If values are less than 16 bytes, need to adjust
+    let extrabits = 16 - integer_bits - fractional_bits - 1;
+    let rawval: i16 = BigEndian::read_i16(&[msb, lsb]);
+    let adj = (rawval as f32 / 2_f32.powi(fractional_bits + extrabits)) / 10_f32.powi(dec_pt_zero_pad);
+    adj
 }
 
 impl MPL115A2Coefficients {
@@ -80,13 +84,13 @@ impl MPL115A2Coefficients {
         let mut buf: [u8; 8] = [0; 8];
         try!(i2cdev.write(&[REGISTER_ADDR_A0])
              .or_else(|e| Err(I2CError::from(e))));
-        try!(i2cdev.write(&mut buf)
+        try!(i2cdev.read(&mut buf)
              .or_else(|e| Err(I2CError::from(e))));
         Ok(MPL115A2Coefficients {
-            a0:  calc_coefficient(buf[0], buf[1], 3, 0),
-            b1:  calc_coefficient(buf[2], buf[3], 13, 0),
-            b2:  calc_coefficient(buf[4], buf[5], 14, 0),
-            c12: calc_coefficient(buf[6], buf[7], 13, 9),
+            a0:  calc_coefficient(buf[0], buf[1], 12, 3, 0),
+            b1:  calc_coefficient(buf[2], buf[3], 2, 13, 0),
+            b2:  calc_coefficient(buf[4], buf[5], 1, 14, 0),
+            c12: calc_coefficient(buf[6], buf[7], 0, 13, 9),
         })
     }
 }
@@ -126,7 +130,7 @@ impl MPL115A2RawReading {
     }
 
     /// Calculate the pressure in pascals for this reading
-    pub fn pressure_pascals(&self, coeff: &MPL115A2Coefficients) -> i32 {
+    pub fn pressure_kpa(&self, coeff: &MPL115A2Coefficients) -> f32 {
         // Pcomp = a0 + (b1 + c12 * Tadc) * Padc + b2 * Tadc
         // Pkpa = Pcomp * ((115 - 50) / 1023) + 50
         let pcomp: f32 =
@@ -135,9 +139,8 @@ impl MPL115A2RawReading {
             (coeff.b2 * self.tadc as f32);
 
         // scale has 1023 bits of range from 50 kPa to 115 kPa
-        let pkpa: f32 = pcomp * (((115 -  50) / 1023) + 50) as f32;
-        let pascals: f32 = pkpa * 1000.0;
-        pascals as i32
+        let pkpa: f32 = pcomp * ((115.0 -  50.0) / 1023.0) + 50.0;
+        pkpa
     }
 }
 
@@ -155,9 +158,9 @@ impl MPL115A2BarometerThermometer {
 }
 
 impl Barometer for MPL115A2BarometerThermometer {
-    fn pressure_pascals(&mut self) -> I2CResult<i32> {
+    fn pressure_kpa(&mut self) -> I2CResult<f32> {
         let reading = try!(MPL115A2RawReading::new(&mut self.i2cdev));
-        Ok(reading.pressure_pascals(&self.coeff))
+        Ok(reading.pressure_kpa(&self.coeff))
     }
 }
 
@@ -171,14 +174,14 @@ impl Thermometer for MPL115A2BarometerThermometer {
 #[test]
 fn test_calc_coefficient() {
     // unsigned simple
-    assert_eq!(calc_coefficient(0x00, 0b1000, 3, 0), 1.0);
+    assert_eq!(calc_coefficient(0x00, 0b1000, 12, 3, 0), 1.0);
 
     // signed simple
-    assert_eq!(calc_coefficient(0x80, 0b1000, 3, 0), -1.0);
+    assert_eq!(calc_coefficient(0x80, 0b1000, 12, 3, 0), -1.0);
 
     // pure integer (negative)
-    assert_eq!(calc_coefficient(0xFF, 0xFF, 0, 0), -32_767_f32);
+    assert_eq!(calc_coefficient(0xFF, 0xFF, 15, 0, 0), -32_767_f32);
 
     // no integer part, zero padding, negative
-    assert_eq!(calc_coefficient(0x8F, 0xFF, 15, 10), -0.000_000_000_012496948);
+    assert_eq!(calc_coefficient(0x8F, 0xFF, 0, 15, 10), -0.000_000_000_012496948);
 }

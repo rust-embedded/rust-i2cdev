@@ -27,9 +27,9 @@ pub trait Thermometer {
 
 /// Trait for sensors that provide access to pressure readings
 pub trait Barometer {
-    /// Get a pressure reading from the sensor in pascals
+    /// Get a pressure reading from the sensor in kPa
     ///
     /// Returns Some(temperature) if avialable, otherwise returns
     /// None
-    fn pressure_pascals(&mut self) -> I2CResult<i32>;
+    fn pressure_kpa(&mut self) -> I2CResult<f32>;
 }
