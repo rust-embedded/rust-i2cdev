@@ -177,11 +177,11 @@ fn test_calc_coefficient() {
     assert_eq!(calc_coefficient(0x00, 0b1000, 12, 3, 0), 1.0);
 
     // signed simple
-    assert_eq!(calc_coefficient(0x80, 0b1000, 12, 3, 0), -1.0);
+    assert_eq!(calc_coefficient(0xFF, 0xF8, 12, 3, 0), -1.0);
 
     // pure integer (negative)
-    assert_eq!(calc_coefficient(0xFF, 0xFF, 15, 0, 0), -32_767_f32);
+    assert_eq!(calc_coefficient(0x80, 0x00, 15, 0, 0), -32_768_f32);
 
     // no integer part, zero padding, negative
-    assert_eq!(calc_coefficient(0x8F, 0xFF, 0, 15, 10), -0.000_000_000_012496948);
+    assert_eq!(calc_coefficient(0x00, 0x01, 15, 0, 10), 0.000_000_000_1);
 }
