@@ -8,13 +8,24 @@
 
 use core::I2CResult;
 
-//pub mod adxl345_accelerometer;
+pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 //pub mod bno055_orientation;
 
+pub struct AccelerometerSample {
+    /// x-axis G's
+    x: f32,
+    /// y-axis G's
+    y: f32,
+    /// z-axis G's
+    z: f32,
+}
+
 /// Trait for sensors that provide access to accelerometer readings (3-axis)
-//trait Accelerometer {
-//}
+pub trait Accelerometer {
+    /// Grab an accelerometer sample from the device
+    fn accelerometer_sample(&mut self) -> I2CResult<AccelerometerSample>;
+}
 
 /// Trait for sensors that provide access to temperature readings
 pub trait Thermometer {
