@@ -12,13 +12,14 @@ pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 //pub mod bno055_orientation;
 
+#[derive(Debug)]
 pub struct AccelerometerSample {
     /// x-axis G's
-    x: f32,
+    pub x: f32,
     /// y-axis G's
-    y: f32,
+    pub y: f32,
     /// z-axis G's
-    z: f32,
+    pub z: f32,
 }
 
 /// Trait for sensors that provide access to accelerometer readings (3-axis)

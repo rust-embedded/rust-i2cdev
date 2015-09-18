@@ -6,6 +6,8 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(dead_code)] // register map
+
 use sensors::{Accelerometer, AccelerometerSample};
 use core::{I2CDevice, I2CResult, I2CError};
 use smbus::I2CSMBus;
@@ -19,8 +21,51 @@ use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 pub const SLAVE_ADDR_PRIMARY: u16 = 0x1D;
 pub const SLAVE_ADDR_ALT: u16 = 0x53;
 
-const REGISTER_ADDR_DATA_FORMAT: u8 = 0x31;
-const REGISTER_ADDR_X0: u8 = 0x32;
+const REGISTER_DEVID: u8 = 0x00;
+const REGSITER_THRESH_TAP: u8 = 0x1D;
+const REGISTER_OFSX: u8 = 0x1E;
+const REGISTER_OFSY: u8 = 0x1F;
+const REGISTER_OFSZ: u8 = 0x20;
+const REGISTER_DUR: u8 = 0x21;
+const REGISTER_LATENT: u8 = 0x22;
+const REGISTER_WINDOW: u8 = 0x23;
+const REGISTER_THRESH_ACT: u8 = 0x24;
+const REGISTER_THRESH_INACT: u8 = 0x25;
+const REGISTER_TIME_INACT: u8 = 0x26;
+const REGISTER_ACT_INACT_CTL: u8 = 0x27;
+const REGISTER_THRESH_FF: u8 = 0x28;
+const REGISTER_TIME_FF: u8 = 0x29;
+const REGISTER_TAP_AXES: u8 = 0x2A;
+const REGISTER_ACT_TAP_STATUS: u8 = 0x2B;
+const REGISTER_BW_RATE: u8 = 0x2C;
+const REGISTER_POWER_CTL: u8 = 0x2D;
+const REGISTER_INT_ENABLE: u8 = 0x2E;
+const REGISTER_INT_MAP: u8 = 0x2F;
+const REGISTER_INT_SOURCE: u8 = 0x30;
+const REGISTER_DATA_FORMAT: u8 = 0x31;
+const REGISTER_X0: u8 = 0x32;
+const REGISTER_X1: u8 = 0x33;
+const REGISTER_Y0: u8 = 0x34;
+const REGISTER_Y1: u8 = 0x35;
+const REGISTER_Z0: u8 = 0x36;
+const REGISTER_Z1: u8 = 0x37;
+const REGISTER_FIFO_CTL: u8 = 0x38;
+const REGISTER_FIFO_STATUS: u8 = 0x39;
+
+#[repr(u8)]
+#[allow(non_camel_case_types)]
+enum ADXL345DataRate {
+    RATE_3200HZ = 0x0F,
+    RATE_1600HZ = 0x0E,
+    RATE_800HZ  = 0x0D,
+    RATE_400HZ  = 0x0C,
+    RATE_200HZ  = 0x0B,
+    RATE_100HZ  = 0x0A,
+    RATE_50HZ   = 0x09,
+    RATE_25HZ   = 0x08,
+    RATE_12HZ5  = 0x07,
+    RATE_6HZ25  = 0x06,
+}
 
 pub struct ADXL345Accelerometer {
     i2cdev: I2CDevice,
@@ -35,9 +80,29 @@ impl ADXL345Accelerometer {
     pub fn new<P: AsRef<Path>>(path: P, slave_addr: u16)
                                -> I2CResult<ADXL345Accelerometer> {
         let i2cdev = try!(I2CDevice::new(path, slave_addr));
+
+        // setup standy mode to configure
+        try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00));
+
+        // configure some defaults
+        try!(i2cdev.smbus_write_byte_data(REGISTER_BW_RATE,
+                                          ADXL345DataRate::RATE_1600HZ as u8));
+        try!(i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08));
+        try!(i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD));
+        try!(i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03));
+        try!(i2cdev.smbus_write_byte_data(REGISTER_OFSZ, 0xFE));
+
+        // put device in measurement mode
+        try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08));
+
         Ok(ADXL345Accelerometer {
             i2cdev: i2cdev,
         })
+    }
+
+    /// Get the device id
+    pub fn device_id(&self) -> I2CResult<u8> {
+        self.i2cdev.smbus_read_byte_data(REGISTER_DEVID)
     }
 }
 
@@ -49,17 +114,20 @@ impl Accelerometer for ADXL345Accelerometer {
         // datasheet recommends multi-byte read to avoid reading
         // an inconsistent set of data
         let mut buf: [u8; 6] = [0u8; 6];
-        try!(self.i2cdev.write(&[REGISTER_ADDR_X0])
+        try!(self.i2cdev.write(&[REGISTER_X0])
              .or_else(|e| Err(I2CError::from(e))));
         try!(self.i2cdev.read(&mut buf)
              .or_else(|e| Err(I2CError::from(e))));
 
         let mut rdr = Cursor::new(&buf[..]);
-        let scalar: f32 = (1 << ACCEL_BITS) as f32 * ACCEL_RANGE;
+        let x: i16 = rdr.read_i16::<LittleEndian>().unwrap();
+        let y: i16 = rdr.read_i16::<LittleEndian>().unwrap();
+        let z: i16 = rdr.read_i16::<LittleEndian>().unwrap();
+        println!("{:?}", (x, y, z));
         Ok(AccelerometerSample {
-            x: rdr.read_i16::<LittleEndian>().unwrap() as f32 * scalar,
-            y: rdr.read_i16::<LittleEndian>().unwrap() as f32 * scalar,
-            z: rdr.read_i16::<LittleEndian>().unwrap() as f32 * scalar,
+            x: (x as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
+            y: (y as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
+            z: (z as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
         })
     }
 }

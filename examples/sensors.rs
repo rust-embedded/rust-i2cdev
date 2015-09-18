@@ -17,8 +17,9 @@ extern crate docopt;
 use std::thread;
 use std::env::args;
 use docopt::Docopt;
-use i2cdev::sensors::{Thermometer, Barometer};
+use i2cdev::sensors::{Thermometer, Barometer, Accelerometer};
 use i2cdev::sensors::mpl115a2_barometer::*;
+use i2cdev::sensors::adxl345_accelerometer::*;
 
 const USAGE: &'static str = "
 Reading Wii Nunchuck data via Linux i2cdev.
@@ -40,9 +41,21 @@ fn main() {
         .unwrap_or_else(|e| e.exit());
     let device = args.get_str("<device>");
     let mut mpl115a2 = MPL115A2BarometerThermometer::new(device).unwrap();
+    let mut adxl345 = ADXL345Accelerometer::new(device, 0x53).unwrap();
+
+    println!("== ADXL345 ID: 0x{:X} ==", adxl345.device_id().unwrap());
+
     loop {
-        println!("Temperature: {:?} C", mpl115a2.temperature_celsius());
-        println!("Pressure:    {:?} kPa", mpl115a2.pressure_kpa());
+        let accel = adxl345.accelerometer_sample().unwrap();
+        println!("Temperature: {:?} C",
+                 mpl115a2.temperature_celsius().unwrap());
+        println!("Pressure:    {:?} kPa",
+                 mpl115a2.pressure_kpa().unwrap());
+        println!("Accel:       {:?}", accel);
+        println!("Accel Tot:   {:?}",
+                 (accel.x.powi(2) +
+                  accel.y.powi(2) +
+                  accel.z.powi(2)).sqrt());
         thread::sleep_ms(1000);
     }
 }
