@@ -53,14 +53,14 @@ const REGISTER_FIFO_STATUS: u8 = 0x39;
 enum ADXL345DataRate {
     RATE_3200HZ = 0x0F,
     RATE_1600HZ = 0x0E,
-    RATE_800HZ  = 0x0D,
-    RATE_400HZ  = 0x0C,
-    RATE_200HZ  = 0x0B,
-    RATE_100HZ  = 0x0A,
-    RATE_50HZ   = 0x09,
-    RATE_25HZ   = 0x08,
-    RATE_12HZ5  = 0x07,
-    RATE_6HZ25  = 0x06,
+    RATE_800HZ = 0x0D,
+    RATE_400HZ = 0x0C,
+    RATE_200HZ = 0x0B,
+    RATE_100HZ = 0x0A,
+    RATE_50HZ = 0x09,
+    RATE_25HZ = 0x08,
+    RATE_12HZ5 = 0x07,
+    RATE_6HZ25 = 0x06,
 }
 
 pub struct ADXL345Accelerometer<T: I2CDevice + Sized> {
@@ -78,8 +78,7 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
         try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00));
 
         // configure some defaults
-        try!(i2cdev.smbus_write_byte_data(REGISTER_BW_RATE,
-                                          ADXL345DataRate::RATE_1600HZ as u8));
+        try!(i2cdev.smbus_write_byte_data(REGISTER_BW_RATE, ADXL345DataRate::RATE_1600HZ as u8));
         try!(i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08));
         try!(i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD));
         try!(i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03));
@@ -88,9 +87,7 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
         // put device in measurement mode
         try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08));
 
-        Ok(ADXL345Accelerometer {
-            i2cdev: i2cdev,
-        })
+        Ok(ADXL345Accelerometer { i2cdev: i2cdev })
     }
 
     /// Get the device id
@@ -107,10 +104,8 @@ impl<T> Accelerometer for ADXL345Accelerometer<T> where T: I2CDevice + Sized {
         // datasheet recommends multi-byte read to avoid reading
         // an inconsistent set of data
         let mut buf: [u8; 6] = [0u8; 6];
-        try!(self.i2cdev.write(&[REGISTER_X0])
-             .or_else(|e| Err(I2CError::from(e))));
-        try!(self.i2cdev.read(&mut buf)
-             .or_else(|e| Err(I2CError::from(e))));
+        try!(self.i2cdev.write(&[REGISTER_X0]).or_else(|e| Err(I2CError::from(e))));
+        try!(self.i2cdev.read(&mut buf).or_else(|e| Err(I2CError::from(e))));
 
         let x: i16 = LittleEndian::read_i16(&[buf[0], buf[1]]);
         let y: i16 = LittleEndian::read_i16(&[buf[2], buf[3]]);

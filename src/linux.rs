@@ -36,13 +36,13 @@ impl LinuxI2CDevice {
     /// Create a new I2CDevice for the specified path
     pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) -> I2CResult<LinuxI2CDevice> {
         let file = try!(OpenOptions::new()
-                        .read(true)
-                        .write(true)
-                        .open(path)
-                        .or_else(|e| Err(I2CError::from(e))));
+                            .read(true)
+                            .write(true)
+                            .open(path)
+                            .or_else(|e| Err(I2CError::from(e))));
         let mut device = LinuxI2CDevice {
             devfile: file,
-            slave_address: 0, // will be set later
+            slave_address: 0, /* will be set later */
         };
         try!(device.set_slave_address(slave_address));
         Ok(device)
@@ -71,15 +71,13 @@ impl I2CDevice for LinuxI2CDevice {
 
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> I2CResult<()> {
-        try!(self.devfile.read(data)
-             .or_else(|e| Err(I2CError::from(e))));
+        try!(self.devfile.read(data).or_else(|e| Err(I2CError::from(e))));
         Ok(())
     }
 
     /// Write the provided buffer to the device
     fn write(&mut self, data: &[u8]) -> I2CResult<()> {
-        try!(self.devfile.write(data)
-             .or_else(|e| Err(I2CError::from(e))));
+        try!(self.devfile.write(data).or_else(|e| Err(I2CError::from(e))));
         Ok(())
     }
 

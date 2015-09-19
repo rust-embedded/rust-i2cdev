@@ -18,8 +18,10 @@
 
 extern crate libc;
 extern crate byteorder;
-#[macro_use] extern crate bitflags;
-#[macro_use] extern crate nix;
+#[macro_use]
+extern crate bitflags;
+#[macro_use]
+extern crate nix;
 
 mod ffi;
 pub mod core;

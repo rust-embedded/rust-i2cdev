@@ -198,8 +198,7 @@ unsafe fn i2c_smbus_access(fd: RawFd,
 
     // remove type information
     let p_args: *mut u8 = mem::transmute(&mut args);
-    try!(ioctl_i2c_smbus(fd, p_args)
-         .or_else(|e| Err(I2CError::from(e))));
+    try!(ioctl_i2c_smbus(fd, p_args).or_else(|e| Err(I2CError::from(e))));
     Ok(())
 }
 
@@ -209,9 +208,7 @@ pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), I2CError> {
         true => I2CSMBusReadWrite::I2C_SMBUS_READ,
         false => I2CSMBusReadWrite::I2C_SMBUS_WRITE,
     };
-    unsafe {
-        i2c_smbus_access(fd, read_write, 0, I2CSMBusSize::I2C_SMBUS_QUICK, ptr::null_mut())
-    }
+    unsafe { i2c_smbus_access(fd, read_write, 0, I2CSMBusSize::I2C_SMBUS_QUICK, ptr::null_mut()) }
 }
 
 #[inline]
@@ -242,18 +239,18 @@ pub fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), I2CError> {
 pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, I2CError> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
-            i2c_smbus_access(fd,
-                             I2CSMBusReadWrite::I2C_SMBUS_READ,
-                             register,
-                             I2CSMBusSize::I2C_SMBUS_BYTE_DATA,
-                             &mut data)
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_READ,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_BYTE_DATA,
+                         &mut data)
     });
     Ok(data.block[0])
 }
 
 #[inline]
 pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), I2CError> {
-    let mut data =  i2c_smbus_data::empty();
+    let mut data = i2c_smbus_data::empty();
     data.block[0] = value;
     try!(unsafe {
         i2c_smbus_access(fd,
@@ -269,16 +266,16 @@ pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(
 pub fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, I2CError> {
     let mut data = i2c_smbus_data::empty();
     try!(unsafe {
-            i2c_smbus_access(fd,
-                             I2CSMBusReadWrite::I2C_SMBUS_READ,
-                             register,
-                             I2CSMBusSize::I2C_SMBUS_WORD_DATA,
-                             &mut data)
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_READ,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_WORD_DATA,
+                         &mut data)
     });
 
     Ok(Cursor::new(&data.block[..])
-        .read_u16::<NativeEndian>()
-        .unwrap())
+           .read_u16::<NativeEndian>()
+           .unwrap())
 }
 
 
@@ -314,8 +311,8 @@ pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16
                          &mut data)
     });
     Ok(Cursor::new(&data.block[..])
-        .read_u16::<NativeEndian>()
-        .unwrap())
+           .read_u16::<NativeEndian>()
+           .unwrap())
 }
 
 #[inline]
@@ -336,10 +333,13 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, I2C
 }
 
 #[inline]
-pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8])
-                                  -> Result<(), I2CError> {
+pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), I2CError> {
     let mut data = i2c_smbus_data::empty();
-    let len: usize = if values.len() > 32 { 32 } else { values.len() };
+    let len: usize = if values.len() > 32 {
+        32
+    } else {
+        values.len()
+    };
     data.block[0] = len as u8;
     for i in 1..(len + 1) {
         data.block[i] = values[i - 1];
@@ -355,10 +355,16 @@ pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8])
 }
 
 #[inline]
-pub fn i2c_smbus_write_i2c_block_data(fd: RawFd, register: u8, values: &[u8])
+pub fn i2c_smbus_write_i2c_block_data(fd: RawFd,
+                                      register: u8,
+                                      values: &[u8])
                                       -> Result<(), I2CError> {
     let mut data = i2c_smbus_data::empty();
-    let len: usize = if values.len() > 32 { 32 } else { values.len() };
+    let len: usize = if values.len() > 32 {
+        32
+    } else {
+        values.len()
+    };
     data.block[0] = len as u8;
     for i in 1..(len + 1) {
         data.block[i] = values[i - 1];
