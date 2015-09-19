@@ -6,17 +6,14 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use sensors::Thermometer;
-use sensors::Barometer;
+use sensors::{Thermometer, Barometer};
 use std::thread;
-use std::io::prelude::*;
 use core::{I2CDevice, I2CResult, I2CError};
-use smbus::I2CSMBus;
-use std::path::Path;
 use byteorder::{ByteOrder, BigEndian};
 
 
-const SLAVE_ADDR: u16 = 0x60; // appears to always be this
+pub const MPL115A2_I2C_ADDR: u16 = 0x60; // appears to always be this
+
 const REGISTER_ADDR_PADC: u8 = 0x00;
 const REGISTER_ADDR_TADC: u8 = 0x02;
 const REGISTER_ADDR_A0: u8 = 0x04; // other coefficients follow
@@ -25,8 +22,8 @@ const REGISTER_ADDR_START_CONVERSION: u8 = 0x12;
 /// Provides access to the MPL115A2 Temperature and Pressure Sensor
 ///
 /// http://cache.freescale.com/files/sensors/doc/data_sheet/MPL115A2.pdf
-pub struct MPL115A2BarometerThermometer {
-    i2cdev: I2CDevice,
+pub struct MPL115A2BarometerThermometer<T: I2CDevice + Sized> {
+    i2cdev: T,
     coeff: MPL115A2Coefficients,
 }
 
@@ -145,10 +142,9 @@ impl MPL115A2RawReading {
 }
 
 
-impl MPL115A2BarometerThermometer {
+impl<T> MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized {
     /// Create sensor accessor for MPL115A2 on the provided i2c bus path
-    pub fn new<P: AsRef<Path>>(path: P) -> I2CResult<MPL115A2BarometerThermometer> {
-        let mut i2cdev = try!(I2CDevice::new(path, SLAVE_ADDR));
+    pub fn new(mut i2cdev: T) -> I2CResult<MPL115A2BarometerThermometer<T>> {
         let coeff = try!(MPL115A2Coefficients::new(&mut i2cdev));
         Ok(MPL115A2BarometerThermometer {
             i2cdev: i2cdev,
@@ -157,14 +153,14 @@ impl MPL115A2BarometerThermometer {
     }
 }
 
-impl Barometer for MPL115A2BarometerThermometer {
+impl<T> Barometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized {
     fn pressure_kpa(&mut self) -> I2CResult<f32> {
         let reading = try!(MPL115A2RawReading::new(&mut self.i2cdev));
         Ok(reading.pressure_kpa(&self.coeff))
     }
 }
 
-impl Thermometer for MPL115A2BarometerThermometer {
+impl<T> Thermometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized {
     fn temperature_celsius(&mut self) -> I2CResult<f32> {
         let reading = try!(MPL115A2RawReading::new(&mut self.i2cdev));
         Ok(reading.temperature_celsius())

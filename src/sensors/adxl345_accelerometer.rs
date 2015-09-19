@@ -10,10 +10,6 @@
 
 use sensors::{Accelerometer, AccelerometerSample};
 use core::{I2CDevice, I2CResult, I2CError};
-use smbus::I2CSMBus;
-use std::path::Path;
-use std::io::Cursor;
-use std::io::prelude::*;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
 
 // TODO: read/write data format (for now, assumed 0x00)
@@ -67,20 +63,17 @@ enum ADXL345DataRate {
     RATE_6HZ25  = 0x06,
 }
 
-pub struct ADXL345Accelerometer {
-    i2cdev: I2CDevice,
+pub struct ADXL345Accelerometer<T: I2CDevice + Sized> {
+    i2cdev: T,
 }
 
-impl ADXL345Accelerometer {
+impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
     /// Create a new accelerometer handle for the given path/addr
     ///
     /// The `SLAVE_ADDR_*` constants from this module should be
     /// used to select either the primary or alternative slave
     /// address (dependent on `ALT ADDRESS` pin)
-    pub fn new<P: AsRef<Path>>(path: P, slave_addr: u16)
-                               -> I2CResult<ADXL345Accelerometer> {
-        let i2cdev = try!(I2CDevice::new(path, slave_addr));
-
+    pub fn new(i2cdev: T) -> I2CResult<ADXL345Accelerometer<T>> {
         // setup standy mode to configure
         try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00));
 
@@ -109,7 +102,7 @@ impl ADXL345Accelerometer {
 const ACCEL_RANGE: f32 = 2.0;  // +- 2G (with defaults)
 const ACCEL_BITS: u8 = 10;  // 10-bit resolution
 
-impl Accelerometer for ADXL345Accelerometer {
+impl<T> Accelerometer for ADXL345Accelerometer<T> where T: I2CDevice + Sized {
     fn accelerometer_sample(&mut self) -> I2CResult<AccelerometerSample> {
         // datasheet recommends multi-byte read to avoid reading
         // an inconsistent set of data
@@ -119,11 +112,9 @@ impl Accelerometer for ADXL345Accelerometer {
         try!(self.i2cdev.read(&mut buf)
              .or_else(|e| Err(I2CError::from(e))));
 
-        let mut rdr = Cursor::new(&buf[..]);
-        let x: i16 = rdr.read_i16::<LittleEndian>().unwrap();
-        let y: i16 = rdr.read_i16::<LittleEndian>().unwrap();
-        let z: i16 = rdr.read_i16::<LittleEndian>().unwrap();
-        println!("{:?}", (x, y, z));
+        let x: i16 = LittleEndian::read_i16(&[buf[0], buf[1]]);
+        let y: i16 = LittleEndian::read_i16(&[buf[2], buf[3]]);
+        let z: i16 = LittleEndian::read_i16(&[buf[4], buf[5]]);
         Ok(AccelerometerSample {
             x: (x as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
             y: (y as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
