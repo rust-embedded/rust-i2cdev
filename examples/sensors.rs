@@ -23,7 +23,7 @@ use i2cdev::sensors::adxl345_accelerometer::*;
 use i2cdev::linux::*;
 
 const USAGE: &'static str = "
-Reading Wii Nunchuck data via Linux i2cdev.
+Reading sensor data from a variety of sensors
 
 Usage:
   sensors <device>
@@ -34,7 +34,6 @@ Options:
   -h --help    Show this help text.
   --version    Show version.
 ";
-
 
 fn main() {
     let args = Docopt::new(USAGE)
