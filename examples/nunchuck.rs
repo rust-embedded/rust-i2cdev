@@ -12,7 +12,7 @@ extern crate i2cdev;
 extern crate docopt;
 
 use i2cdev::core::*;
-use i2cdev::smbus::*;
+use i2cdev::linux::*;
 use std::io;
 use std::io::prelude::*;
 use std::env::args;
@@ -34,6 +34,8 @@ Options:
   -h --help    Show this help text.
   --version    Show version.
 ";
+
+// TODO: Move Nunchuck code out to be an actual sensor and add tests
 
 #[derive(Debug)]
 struct NunchuckReading {
@@ -65,25 +67,7 @@ impl NunchuckReading {
 }
 
 struct Nunchuck {
-    i2cdev: I2CDevice,
-}
-
-#[derive(Debug)]
-enum NunchuckOpenError {
-    InitError(NunchuckInitError),
-    I2CError(I2CError),
-}
-
-#[derive(Debug)]
-enum NunchuckInitError {
-    WriteFailed,
-}
-
-#[derive(Debug)]
-enum NunchuckReadError {
-    I2CError(I2CError),
-    IOError(io::Error),
-    ParsingError,
+    i2cdev: LinuxI2CDevice,
 }
 
 impl Nunchuck {
@@ -92,41 +76,35 @@ impl Nunchuck {
     /// This method will open the provide i2c device file and will
     /// send the required init sequence in order to read data in
     /// the future.
-    pub fn new<P: AsRef<Path>>(path: P) -> Result<Nunchuck, NunchuckOpenError> {
-        let i2cdev = try!(I2CDevice::new(path, NUNCHUCK_SLAVE_ADDR)
-                          .or_else(|e| Err(NunchuckOpenError::I2CError(e))));
+    pub fn new<P: AsRef<Path>>(path: P) -> I2CResult<Nunchuck> {
+        let i2cdev = try!(LinuxI2CDevice::new(path, NUNCHUCK_SLAVE_ADDR));
         let mut nunchuck = Nunchuck { i2cdev: i2cdev };
-        try!(nunchuck.init().or_else(|e| Err(NunchuckOpenError::InitError(e))));
+        try!(nunchuck.init());
         Ok(nunchuck)
     }
 
     /// Send the init sequence to the Wii Nunchuck
-    pub fn init(&mut self) -> Result<(), NunchuckInitError> {
+    pub fn init(&mut self) -> I2CResult<()> {
         // These registers must be written; the documentation is a bit
         // lacking but it appears this is some kind of handshake to
         // perform unencrypted data tranfers
-        try!(self.i2cdev.smbus_write_byte_data(0xF0, 0x55)
-             .or_else(|_| Err(NunchuckInitError::WriteFailed)));
-        try!(self.i2cdev.smbus_write_byte_data(0xFB, 0x00)
-             .or_else(|_| Err(NunchuckInitError::WriteFailed)));
+        try!(self.i2cdev.smbus_write_byte_data(0xF0, 0x55));
+        try!(self.i2cdev.smbus_write_byte_data(0xFB, 0x00));
         Ok(())
     }
 
-    pub fn read(&mut self) -> Result<NunchuckReading, NunchuckReadError> {
+    pub fn read(&mut self) -> I2CResult<NunchuckReading> {
         let mut buf: [u8; 6] = [0; 6];
 
         // tell the nunchuck to prepare a sample
-        try!(self.i2cdev.smbus_write_byte(0x00)
-             .or_else(|e| Err(NunchuckReadError::I2CError(e))));
+        try!(self.i2cdev.smbus_write_byte(0x00));
 
         // now, read it!
         thread::sleep_ms(10);
-        match self.i2cdev.read(&mut buf) {
-            Ok(_len) => match NunchuckReading::from_data(&buf) {
-                Some(reading) => Ok(reading),
-                None => Err(NunchuckReadError::ParsingError),
-            },
-            Err(err) => Err(NunchuckReadError::IOError(err)),
+        try!(self.i2cdev.read(&mut buf));
+        match NunchuckReading::from_data(&buf) {
+            Some(reading) => Ok(reading),
+            None => Err(I2CError::Other("Unable to Parse Data"))
         }
     }
 }

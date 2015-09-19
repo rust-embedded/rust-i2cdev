@@ -20,9 +20,10 @@ use docopt::Docopt;
 use i2cdev::sensors::{Thermometer, Barometer, Accelerometer};
 use i2cdev::sensors::mpl115a2_barometer::*;
 use i2cdev::sensors::adxl345_accelerometer::*;
+use i2cdev::linux::*;
 
 const USAGE: &'static str = "
-Reading Wii Nunchuck data via Linux i2cdev.
+Reading sensor data from a variety of sensors
 
 Usage:
   sensors <device>
@@ -34,14 +35,18 @@ Options:
   --version    Show version.
 ";
 
-
 fn main() {
     let args = Docopt::new(USAGE)
         .and_then(|d| d.argv(args().into_iter()).parse())
         .unwrap_or_else(|e| e.exit());
     let device = args.get_str("<device>");
-    let mut mpl115a2 = MPL115A2BarometerThermometer::new(device).unwrap();
-    let mut adxl345 = ADXL345Accelerometer::new(device, 0x53).unwrap();
+
+    let mut mpl115a2 = MPL115A2BarometerThermometer::new(
+        LinuxI2CDevice::new(device, MPL115A2_I2C_ADDR).unwrap())
+        .unwrap();
+    let mut adxl345 = ADXL345Accelerometer::new(
+        LinuxI2CDevice::new(device, 0x53).unwrap())
+        .unwrap();
 
     println!("== ADXL345 ID: 0x{:X} ==", adxl345.device_id().unwrap());
 
