@@ -13,7 +13,6 @@ extern crate docopt;
 
 use i2cdev::core::*;
 use i2cdev::linux::*;
-use std::io;
 use std::io::prelude::*;
 use std::env::args;
 use docopt::Docopt;

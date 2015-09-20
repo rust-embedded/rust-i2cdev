@@ -82,7 +82,7 @@ impl I2CDevice for LinuxI2CDevice {
     }
 
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
-    fn smbus_write_quick(&self, bit: bool) -> I2CResult<()> {
+    fn smbus_write_quick(&mut self, bit: bool) -> I2CResult<()> {
         ffi::i2c_smbus_write_quick(self.as_raw_fd(), bit)
     }
 
@@ -91,7 +91,7 @@ impl I2CDevice for LinuxI2CDevice {
     /// Some devices are so simple that this interface is enough; for
     /// others, it is a shorthand if you want to read the same register as in
     /// the previous SMBus command.
-    fn smbus_read_byte(&self) -> I2CResult<u8> {
+    fn smbus_read_byte(&mut self) -> I2CResult<u8> {
         ffi::i2c_smbus_read_byte(self.as_raw_fd())
     }
 
@@ -99,36 +99,36 @@ impl I2CDevice for LinuxI2CDevice {
     ///
     /// This is the opposite operation as smbus_read_byte.  As with read_byte,
     /// no register is specified.
-    fn smbus_write_byte(&self, value: u8) -> I2CResult<()> {
+    fn smbus_write_byte(&mut self, value: u8) -> I2CResult<()> {
         ffi::i2c_smbus_write_byte(self.as_raw_fd(), value)
     }
 
     /// Read a single byte from a device, from a designated register
     ///
     /// The register is specified through the Comm byte.
-    fn smbus_read_byte_data(&self, register: u8) -> I2CResult<u8> {
+    fn smbus_read_byte_data(&mut self, register: u8) -> I2CResult<u8> {
         ffi::i2c_smbus_read_byte_data(self.as_raw_fd(), register)
     }
 
     /// Write a single byte to a specific register on a device
     ///
     /// The register is specified through the Comm byte.
-    fn smbus_write_byte_data(&self, register: u8, value: u8) -> I2CResult<()> {
+    fn smbus_write_byte_data(&mut self, register: u8, value: u8) -> I2CResult<()> {
         ffi::i2c_smbus_write_byte_data(self.as_raw_fd(), register, value)
     }
 
     /// Read 2 bytes form a given register on a device
-    fn smbus_read_word_data(&self, register: u8) -> I2CResult<u16> {
+    fn smbus_read_word_data(&mut self, register: u8) -> I2CResult<u16> {
         ffi::i2c_smbus_read_word_data(self.as_raw_fd(), register)
     }
 
     /// Write 2 bytes to a given register on a device
-    fn smbus_write_word_data(&self, register: u8, value: u16) -> I2CResult<()> {
+    fn smbus_write_word_data(&mut self, register: u8, value: u16) -> I2CResult<()> {
         ffi::i2c_smbus_write_word_data(self.as_raw_fd(), register, value)
     }
 
     /// Select a register, send 16 bits of data to it, and read 16 bits of data
-    fn smbus_process_word(&self, register: u8, value: u16) -> I2CResult<u16> {
+    fn smbus_process_word(&mut self, register: u8, value: u16) -> I2CResult<u16> {
         ffi::i2c_smbus_process_call(self.as_raw_fd(), register, value)
     }
 
@@ -137,7 +137,7 @@ impl I2CDevice for LinuxI2CDevice {
     /// The actual number of bytes available to read is returned in the count
     /// byte.  This code returns a correctly sized vector containing the
     /// count bytes read from the device.
-    fn smbus_read_block_data(&self, register: u8) -> I2CResult<Vec<u8>> {
+    fn smbus_read_block_data(&mut self, register: u8) -> I2CResult<Vec<u8>> {
         ffi::i2c_smbus_read_block_data(self.as_raw_fd(), register)
     }
 
@@ -146,13 +146,13 @@ impl I2CDevice for LinuxI2CDevice {
     /// The opposite of the Block Read command, this writes up to 32 bytes to
     /// a device, to a designated register that is specified through the
     /// Comm byte. The amount of data is specified in the Count byte.
-    fn smbus_write_block_data(&self, register: u8, values: &[u8]) -> I2CResult<()> {
+    fn smbus_write_block_data(&mut self, register: u8, values: &[u8]) -> I2CResult<()> {
         ffi::i2c_smbus_write_block_data(self.as_raw_fd(), register, values)
     }
 
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.
-    fn smbus_process_block(&self, register: u8, values: &[u8]) -> I2CResult<()> {
+    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> I2CResult<()> {
         ffi::i2c_smbus_write_i2c_block_data(self.as_raw_fd(), register, values)
     }
 }

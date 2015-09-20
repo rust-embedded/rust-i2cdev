@@ -27,3 +27,6 @@ mod ffi;
 pub mod core;
 pub mod linux;
 pub mod sensors;
+
+#[cfg(test)]
+pub mod mock;

@@ -73,7 +73,7 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
     /// The `SLAVE_ADDR_*` constants from this module should be
     /// used to select either the primary or alternative slave
     /// address (dependent on `ALT ADDRESS` pin)
-    pub fn new(i2cdev: T) -> I2CResult<ADXL345Accelerometer<T>> {
+    pub fn new(mut i2cdev: T) -> I2CResult<ADXL345Accelerometer<T>> {
         // setup standy mode to configure
         try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00));
 
@@ -91,7 +91,7 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
     }
 
     /// Get the device id
-    pub fn device_id(&self) -> I2CResult<u8> {
+    pub fn device_id(&mut self) -> I2CResult<u8> {
         self.i2cdev.smbus_read_byte_data(REGISTER_DEVID)
     }
 }

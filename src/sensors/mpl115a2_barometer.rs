@@ -23,8 +23,8 @@ const REGISTER_ADDR_START_CONVERSION: u8 = 0x12;
 ///
 /// http://cache.freescale.com/files/sensors/doc/data_sheet/MPL115A2.pdf
 pub struct MPL115A2BarometerThermometer<T: I2CDevice + Sized> {
-    i2cdev: T,
-    coeff: MPL115A2Coefficients,
+    pub i2cdev: T,
+    pub coeff: MPL115A2Coefficients,
 }
 
 /// In order to get either the temperature or humdity it is
@@ -81,8 +81,8 @@ impl MPL115A2Coefficients {
     /// coefficient.
     pub fn new(i2cdev: &mut I2CDevice) -> I2CResult<MPL115A2Coefficients> {
         let mut buf: [u8; 8] = [0; 8];
-        try!(i2cdev.write(&[REGISTER_ADDR_A0]).or_else(|e| Err(I2CError::from(e))));
-        try!(i2cdev.read(&mut buf).or_else(|e| Err(I2CError::from(e))));
+        try!(i2cdev.write(&[REGISTER_ADDR_A0]));
+        try!(i2cdev.read(&mut buf));
         Ok(MPL115A2Coefficients {
             a0: calc_coefficient(buf[0], buf[1], 12, 3, 0),
             b1: calc_coefficient(buf[2], buf[3], 2, 13, 0),
@@ -159,17 +159,54 @@ impl<T> Thermometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Siz
     }
 }
 
-#[test]
-fn test_calc_coefficient() {
-    // unsigned simple
-    assert_eq!(calc_coefficient(0x00, 0b1000, 12, 3, 0), 1.0);
 
-    // signed simple
-    assert_eq!(calc_coefficient(0xFF, 0xF8, 12, 3, 0), -1.0);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::calc_coefficient;
+    use sensors::*;
+    use mock::MockI2CDevice;
 
-    // pure integer (negative)
-    assert_eq!(calc_coefficient(0x80, 0x00, 15, 0, 0), -32_768_f32);
+    fn make_dev(mut i2cdev: MockI2CDevice) -> MPL115A2BarometerThermometer<MockI2CDevice> {
+        i2cdev.queue_read(&[74, 98, // A0
+                            165, 150, // B1
+                            182, 106, // B2
+                            63, 232]); // C12
+        MPL115A2BarometerThermometer::new(i2cdev).unwrap()
+    }
 
-    // no integer part, zero padding, negative
-    assert_eq!(calc_coefficient(0x00, 0x01, 15, 0, 10), 0.000_000_000_1);
+    fn vec_replace(dst: &mut [u8], offset: usize, src: &[u8]) {
+        for i in 0..src.len() {
+            dst[offset + i] = src[i];
+        }
+    }
+
+    #[test]
+    fn test_calc_coefficient() {
+        // unsigned simple
+        assert_eq!(calc_coefficient(0x00, 0b1000, 12, 3, 0), 1.0);
+        // signed simple
+        assert_eq!(calc_coefficient(0xFF, 0xF8, 12, 3, 0), -1.0);
+        // pure integer (negative)
+        assert_eq!(calc_coefficient(0x80, 0x00, 15, 0, 0), -32_768_f32);
+        // no integer part, zero padding, negative
+        assert_eq!(calc_coefficient(0x00, 0x01, 15, 0, 10), 0.000_000_000_1);
+    }
+
+    #[test]
+    fn test_basic_pressure_read() {
+        let mut i2cdev = MockI2CDevice::new();
+        vec_replace(&mut i2cdev.regmap, 0, &[0x6e, 0xc0, 0x81, 0x40]);
+        let mut dev = make_dev(i2cdev);
+        assert_eq!(dev.pressure_kpa().unwrap(), 84.22476);
+    }
+
+    #[test]
+    fn test_basic_temp_read() {
+        let mut i2cdev = MockI2CDevice::new();
+        vec_replace(&mut i2cdev.regmap, 0, &[0x6e, 0xc0, 0x81, 0x40]);
+        let mut dev = make_dev(i2cdev);
+        assert_eq!(dev.temperature_celsius().unwrap(), 21.261683);
+    }
+
 }
