@@ -27,6 +27,7 @@ mod ffi;
 pub mod core;
 pub mod linux;
 pub mod sensors;
+pub mod regmap;
 
 #[cfg(test)]
 pub mod mock;
