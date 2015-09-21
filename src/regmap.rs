@@ -10,24 +10,26 @@
 macro_rules! i2cmap {
     (
         $I2CMap:ident = {
-            $($value:expr => $regname:ident : $T: ty),+
+            $( $value:expr => $regname:ident : $T:ty,)+
         }
-    ) => {
-        pub enum $I2CMap {
-            $($regname: $T = $value,)+
-        }
-    }
+    ) => (
+        pub mod $I2CMap {$(
+            pub const $regname: u8 = $value;
+        )+}
+    )
 }
 
 
 i2cmap! {
     ADXL345_REGS = {
-        0x00 => DEVID: u8,
-        0x1D => THRESH_TAP: u8,
+        0x00 => devid: u8,
+        0x1D => thresh_tap: u8,
+    }
+}
+
+
         // 0x1E => OFSX: u8,
         // 0x1F => OFSY: u8,
         // 0x20 => OFSZ: u8,
         // 0x21 => DUR: u8,
         // 0x22 => LATENT: u8,
-    }
-}
