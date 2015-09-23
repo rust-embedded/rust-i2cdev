@@ -93,12 +93,6 @@ impl MPL115A2Coefficients {
 }
 
 
-fn le_to_be(val: u16) -> u16 {
-    let msb = val & 0xff;
-    let lsb = (val & 0xff00) >> 8;
-    (msb << 8) | lsb
-}
-
 impl MPL115A2RawReading {
 
     /// Create a new reading from the provided I2C Device
@@ -111,10 +105,11 @@ impl MPL115A2RawReading {
 
         // The SMBus functions read word values as little endian but that is not
         // what we want
-        let raw_tadc: u16 = le_to_be(try!(i2cdev.smbus_read_word_data(REGISTER_ADDR_TADC)));
-        let raw_padc: u16 = le_to_be(try!(i2cdev.smbus_read_word_data(REGISTER_ADDR_PADC)));
-        let padc: u16 = raw_padc >> 6;
-        let tadc: u16 = raw_tadc >> 6;
+        let mut buf = [0_u8; 4];
+        try!(i2cdev.write(&[REGISTER_ADDR_PADC]));
+        try!(i2cdev.read(&mut buf));
+        let padc: u16 = BigEndian::read_u16(&buf) >> 6;
+        let tadc: u16 = BigEndian::read_u16(&buf[2..]) >> 6;
         Ok(MPL115A2RawReading { padc: padc, tadc: tadc })
     }
 
@@ -167,46 +162,54 @@ mod tests {
     use sensors::*;
     use mock::MockI2CDevice;
 
-    fn make_dev(mut i2cdev: MockI2CDevice) -> MPL115A2BarometerThermometer<MockI2CDevice> {
-        i2cdev.queue_read(&[74, 98, // A0
-                            165, 150, // B1
-                            182, 106, // B2
-                            63, 232]); // C12
-        MPL115A2BarometerThermometer::new(i2cdev).unwrap()
+    macro_rules! assert_almost_eq {
+        ($left:expr, $right:expr) => ({
+            match (&($left), &($right)) {
+                (left_val, right_val) => {
+                    if (*left_val - *right_val).abs() > 0.0001 {
+                        panic!("assertion failed: ({:?} != {:?})", *left_val, *right_val);
+                    }
+                }
+            }
+        })
     }
 
-    fn vec_replace(dst: &mut [u8], offset: usize, src: &[u8]) {
-        for i in 0..src.len() {
-            dst[offset + i] = src[i];
-        }
+    fn make_dev(mut i2cdev: MockI2CDevice) -> MPL115A2BarometerThermometer<MockI2CDevice> {
+        (&mut i2cdev.regmap).write_regs(0x04, &[74, 98, // A0
+                                                165, 150, // B1
+                                                182, 106, // B2
+                                                63, 232]); // C12
+        MPL115A2BarometerThermometer::new(i2cdev).unwrap()
     }
 
     #[test]
     fn test_calc_coefficient() {
         // unsigned simple
-        assert_eq!(calc_coefficient(0x00, 0b1000, 12, 3, 0), 1.0);
+        assert_almost_eq!(calc_coefficient(0x00, 0b1000, 12, 3, 0), 1.0);
         // signed simple
-        assert_eq!(calc_coefficient(0xFF, 0xF8, 12, 3, 0), -1.0);
+        assert_almost_eq!(calc_coefficient(0xFF, 0xF8, 12, 3, 0), -1.0);
         // pure integer (negative)
-        assert_eq!(calc_coefficient(0x80, 0x00, 15, 0, 0), -32_768_f32);
+        assert_almost_eq!(calc_coefficient(0x80, 0x00, 15, 0, 0), -32_768_f32);
         // no integer part, zero padding, negative
-        assert_eq!(calc_coefficient(0x00, 0x01, 15, 0, 10), 0.000_000_000_1);
+        assert_almost_eq!(calc_coefficient(0x00, 0x01, 15, 0, 10), 0.000_000_000_1);
     }
 
     #[test]
     fn test_basic_pressure_read() {
         let mut i2cdev = MockI2CDevice::new();
-        vec_replace(&mut i2cdev.regmap, 0, &[0x6e, 0xc0, 0x81, 0x40]);
+        (&mut i2cdev.regmap).write_regs(0x00, &[0x6e, 0xc0, 0x81, 0x40]);
+
         let mut dev = make_dev(i2cdev);
-        assert_eq!(dev.pressure_kpa().unwrap(), 84.22476);
+        assert_almost_eq!(dev.pressure_kpa().unwrap(), 83.93877);
     }
 
     #[test]
     fn test_basic_temp_read() {
         let mut i2cdev = MockI2CDevice::new();
-        vec_replace(&mut i2cdev.regmap, 0, &[0x6e, 0xc0, 0x81, 0x40]);
+        (&mut i2cdev.regmap).write_regs(0, &[0x6e, 0xc0, 0x81, 0x40]);
+
         let mut dev = make_dev(i2cdev);
-        assert_eq!(dev.temperature_celsius().unwrap(), 21.261683);
+        assert_almost_eq!(dev.temperature_celsius().unwrap(), 21.448599);
     }
 
 }
