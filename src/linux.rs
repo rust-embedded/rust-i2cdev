@@ -23,14 +23,16 @@ pub struct LinuxI2CDevice {
 }
 
 impl convert::From<nix::Error> for I2CError {
+    #[allow(unused_variables)]
     fn from(e: nix::Error) -> I2CError {
-        I2CError::Other("")
+        I2CError::Other("Uncategorized Nix Error")  // TODO
     }
 }
 
 impl convert::From<io::Error> for I2CError {
+    #[allow(unused_variables)]
     fn from(e: io::Error) -> I2CError {
-        I2CError::Other("")
+        I2CError::Other("Uncategorized IO Error")  // TODO
     }
 }
 

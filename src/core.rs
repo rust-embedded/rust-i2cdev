@@ -36,6 +36,7 @@ pub trait I2CDevice {
      */
 
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
+    #[allow(unused_variables)]
     fn smbus_write_quick(&mut self, bit: bool) -> I2CResult<()> {
         // not supported by default; cannot be expressed with read/write
         // but I'm not aware of any real use cases
@@ -104,6 +105,7 @@ pub trait I2CDevice {
     /// The actual number of bytes available to read is returned in the count
     /// byte.  This code returns a correctly sized vector containing the
     /// count bytes read from the device.
+    #[allow(unused_variables)]
     fn smbus_read_block_data(&mut self, register: u8) -> I2CResult<Vec<u8>> {
         Err(I2CError::NotSupported)
     }
@@ -113,12 +115,14 @@ pub trait I2CDevice {
     /// The opposite of the Block Read command, this writes up to 32 bytes to
     /// a device, to a designated register that is specified through the
     /// Comm byte. The amount of data is specified in the Count byte.
+    #[allow(unused_variables)]
     fn smbus_write_block_data(&mut self, register: u8, values: &[u8]) -> I2CResult<()> {
         Err(I2CError::NotSupported)
     }
 
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.
+    #[allow(unused_variables)]
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> I2CResult<()> {
         Err(I2CError::NotSupported)
     }

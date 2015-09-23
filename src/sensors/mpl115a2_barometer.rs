@@ -6,11 +6,12 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
+#![allow(dead_code)]
+
 use sensors::{Thermometer, Barometer};
 use std::thread;
-use core::{I2CDevice, I2CResult, I2CError};
+use core::{I2CDevice, I2CResult};
 use byteorder::{ByteOrder, BigEndian};
-
 
 pub const MPL115A2_I2C_ADDR: u16 = 0x60; // appears to always be this
 
