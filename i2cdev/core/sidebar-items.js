@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["I2CError","Error that occured while performing and I2C Operation"]],"trait":[["I2CDevice","Interface to an I2C Slave Device from an I2C Master"]],"type":[["I2CResult","Result of an I2C Operation"]]});

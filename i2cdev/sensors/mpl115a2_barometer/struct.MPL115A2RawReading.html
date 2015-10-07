@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `MPL115A2RawReading` struct in crate `i2cdev`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, MPL115A2RawReading">
+
+    <title>i2cdev::sensors::mpl115a2_barometer::MPL115A2RawReading - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <section class="sidebar">
+        
+        <p class='location'><a href='../../index.html'>i2cdev</a>::<wbr><a href='../index.html'>sensors</a>::<wbr><a href='index.html'>mpl115a2_barometer</a></p><script>window.sidebarCurrent = {name: 'MPL115A2RawReading', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </section>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press 'S' to search, '?' for more options..."
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../../index.html'>i2cdev</a>::<wbr><a href='../index.html'>sensors</a>::<wbr><a href='index.html'>mpl115a2_barometer</a>::<wbr><a class='struct' href=''>MPL115A2RawReading</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-6318' class='srclink' href='../../../src/i2cdev/sensors/mpl115a2_barometer.rs.html#43-46' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct MPL115A2RawReading {
+    // some fields omitted
+}</pre><div class='docblock'><p>In order to get either the temperature or humdity it is
+necessary to read several different values from the chip.</p>
+
+<p>These are not generally useful in and of themselves but
+are used for calculating temperature/pressure.  The structure
+is exposed externally as they <em>could</em> be useful for some
+unknown use case.  Generally, you shouldn&#39;t ever need
+to use this directly.</p>
+
+<p>One use case for use of this struct directly would be for
+getting both temperature and pressure in a single call.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../../i2cdev/sensors/mpl115a2_barometer/struct.MPL115A2RawReading.html' title='i2cdev::sensors::mpl115a2_barometer::MPL115A2RawReading'>MPL115A2RawReading</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>(i2cdev: &amp;mut <a class='trait' href='../../../i2cdev/core/trait.I2CDevice.html' title='i2cdev::core::I2CDevice'>I2CDevice</a>) -&gt; <a class='type' href='../../../i2cdev/core/type.I2CResult.html' title='i2cdev::core::I2CResult'>I2CResult</a>&lt;<a class='struct' href='../../../i2cdev/sensors/mpl115a2_barometer/struct.MPL115A2RawReading.html' title='i2cdev::sensors::mpl115a2_barometer::MPL115A2RawReading'>MPL115A2RawReading</a>&gt;</code></h4>
+<div class='docblock'><p>Create a new reading from the provided I2C Device</p>
+</div><h4 id='method.temperature_celsius' class='method'><code>fn <a href='#method.temperature_celsius' class='fnname'>temperature_celsius</a>(&amp;self) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a></code></h4>
+<div class='docblock'><p>Calculate the temperature in centrigrade for this reading</p>
+</div><h4 id='method.pressure_kpa' class='method'><code>fn <a href='#method.pressure_kpa' class='fnname'>pressure_kpa</a>(&amp;self, coeff: &amp;<a class='struct' href='../../../i2cdev/sensors/mpl115a2_barometer/struct.MPL115A2Coefficients.html' title='i2cdev::sensors::mpl115a2_barometer::MPL115A2Coefficients'>MPL115A2Coefficients</a>) -&gt; <a href='http://doc.rust-lang.org/nightly/std/primitive.f32.html'>f32</a></code></h4>
+<div class='docblock'><p>Calculate the pressure in pascals for this reading</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='struct' href='../../../i2cdev/sensors/mpl115a2_barometer/struct.MPL115A2RawReading.html' title='i2cdev::sensors::mpl115a2_barometer::MPL115A2RawReading'>MPL115A2RawReading</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='http://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='http://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='http://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <div id="help" class="hidden">
+        <div class="shortcuts">
+            <h1>Keyboard shortcuts</h1>
+            <dl>
+                <dt>?</dt>
+                <dd>Show this help dialog</dd>
+                <dt>S</dt>
+                <dd>Focus the search field</dd>
+                <dt>&larrb;</dt>
+                <dd>Move up in search results</dd>
+                <dt>&rarrb;</dt>
+                <dd>Move down in search results</dd>
+                <dt>&#9166;</dt>
+                <dd>Go to active search result</dd>
+            </dl>
+        </div>
+        <div class="infos">
+            <h1>Search tricks</h1>
+            <p>
+                Prefix searches with a type followed by a colon (e.g.
+                <code>fn:</code>) to restrict the search to a given type.
+            </p>
+            <p>
+                Accepted types are: <code>fn</code>, <code>mod</code>,
+                <code>struct</code>, <code>enum</code>,
+                <code>trait</code>, <code>typedef</code> (or
+                <code>tdef</code>).
+            </p>
+            <p>
+                Search functions by type signature (e.g.
+                <code>vec -> usize</code>)
+            </p>
+        </div>
+    </div>
+
+    
+
+    <script>
+        window.rootPath = "../../../";
+        window.currentCrate = "i2cdev";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../../jquery.js"></script>
+    <script src="../../../main.js"></script>
+    
+    <script async src="../../../search-index.js"></script>
+</body>
+</html>

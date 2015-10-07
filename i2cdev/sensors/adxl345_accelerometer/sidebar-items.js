@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["SLAVE_ADDR_ALT",""],["SLAVE_ADDR_PRIMARY",""]],"struct":[["ADXL345Accelerometer",""]]});
