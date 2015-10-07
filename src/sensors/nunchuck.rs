@@ -62,6 +62,11 @@ impl<T> Nunchuck<T> where T: I2CDevice {
         Ok(nunchuck)
     }
 
+    #[cfg(test)]
+    pub fn get_i2cdev(&mut self) -> &mut T {
+        &mut self.i2cdev
+    }
+
     /// Send the init sequence to the Wii Nunchuck
     pub fn init(&mut self) -> I2CResult<()> {
         // These registers must be written; the documentation is a bit
@@ -85,5 +90,55 @@ impl<T> Nunchuck<T> where T: I2CDevice {
             Some(reading) => Ok(reading),
             None => Err(I2CError::Other("Unable to Parse Data"))
         }
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use core::I2CDevice;
+    use mock::MockI2CDevice;
+
+    #[test]
+    fn test_intialization() {
+        // write out some "bad" values to start out with so we know the
+        // write happens
+        let mut i2cdev = MockI2CDevice::new();
+        i2cdev.regmap.smbus_write_byte_data(0xF0, 0xFF).unwrap();
+        i2cdev.regmap.smbus_write_byte_data(0xFB, 0xFF).unwrap();
+
+        // these values must be written out for things to work
+        let mut dev = Nunchuck::new(i2cdev).unwrap();
+        assert_eq!(dev.get_i2cdev().regmap.smbus_read_byte_data(0xF0).unwrap(), 0x55);
+        assert_eq!(dev.get_i2cdev().regmap.smbus_read_byte_data(0xFB).unwrap(), 0x00);
+    }
+
+    #[test]
+    fn test_read_zeroed_out() {
+        let mut dev = Nunchuck::new(MockI2CDevice::new()).unwrap();
+        let reading = dev.read().unwrap();
+        assert_eq!(reading.joystick_x, 0);
+        assert_eq!(reading.joystick_y, 0);
+        assert_eq!(reading.accel_x, 0);
+        assert_eq!(reading.accel_y, 0);
+        assert_eq!(reading.accel_z, 0);
+        assert_eq!(reading.c_button_pressed, true);
+        assert_eq!(reading.z_button_pressed, true);
+    }
+
+    #[test]
+    fn test_read_sample_data() {
+        let mut i2cdev = MockI2CDevice::new();
+        i2cdev.regmap.write(&[0, 127, 128, 191, 129, 144, 71]).unwrap();
+        let mut dev = Nunchuck::new(i2cdev).unwrap();
+        let reading = dev.read().unwrap();
+        assert_eq!(reading.joystick_x, 127);
+        assert_eq!(reading.joystick_y, 128);
+        assert_eq!(reading.accel_x, 765);
+        assert_eq!(reading.accel_y, 516);
+        assert_eq!(reading.accel_z, 577);
+        assert_eq!(reading.c_button_pressed, false);
+        assert_eq!(reading.z_button_pressed, false);
     }
 }
