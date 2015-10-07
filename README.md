@@ -1,7 +1,7 @@
 Rust Spidev
 ===========
 
-[![Build Status](https://img.shields.io/travis/posborne/rust-i2cdev.svg)](https://travis-ci.org/posborne/rust-i2cdev)
+[![Build Status](https://travis-ci.org/posborne/rust-i2cdev.svg?branch=master)](https://travis-ci.org/posborne/rust-i2cdev)
 [![Version](https://img.shields.io/crates/v/i2cdev.svg)](https://crates.io/crates/i2cdev)
 [![License](https://img.shields.io/crates/l/i2cdev.svg)](https://github.com/posborne/rust-i2cdev/blob/master/README.md#license)
 
