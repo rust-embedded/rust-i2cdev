@@ -9,13 +9,14 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use core::*;
 use nix;
 use std::mem;
 use std::ptr;
 use std::io::Cursor;
 use std::os::unix::prelude::*;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
+
+pub type I2CError = nix::Error;
 
 bitflags! {
     flags I2CMsgFlags: u16 {
@@ -198,8 +199,7 @@ unsafe fn i2c_smbus_access(fd: RawFd,
 
     // remove type information
     let p_args: *mut u8 = mem::transmute(&mut args);
-    try!(ioctl_i2c_smbus(fd, p_args).or_else(|e| Err(I2CError::from(e))));
-    Ok(())
+    ioctl_i2c_smbus(fd, p_args).map(drop)
 }
 
 #[inline]
