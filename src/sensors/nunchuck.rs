@@ -11,9 +11,15 @@
 use std::io::prelude::*;
 use std::thread;
 
-use core::{I2CDevice, I2CResult, I2CError};
+use core::I2CDevice;
 
 pub const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
+
+#[derive(Debug)]
+pub enum NunchuckError<E> {
+    Error(E),
+    ParseError,
+}
 
 // TODO: Move Nunchuck code out to be an actual sensor and add tests
 
@@ -56,7 +62,7 @@ impl<T> Nunchuck<T> where T: I2CDevice {
     /// This method will open the provide i2c device file and will
     /// send the required init sequence in order to read data in
     /// the future.
-    pub fn new(i2cdev: T) -> I2CResult<Nunchuck<T>> {
+    pub fn new(i2cdev: T) -> Result<Nunchuck<T>, T::Error> {
         let mut nunchuck = Nunchuck { i2cdev: i2cdev };
         try!(nunchuck.init());
         Ok(nunchuck)
@@ -68,7 +74,7 @@ impl<T> Nunchuck<T> where T: I2CDevice {
     }
 
     /// Send the init sequence to the Wii Nunchuck
-    pub fn init(&mut self) -> I2CResult<()> {
+    pub fn init(&mut self) -> Result<(), T::Error> {
         // These registers must be written; the documentation is a bit
         // lacking but it appears this is some kind of handshake to
         // perform unencrypted data tranfers
@@ -77,19 +83,16 @@ impl<T> Nunchuck<T> where T: I2CDevice {
         Ok(())
     }
 
-    pub fn read(&mut self) -> I2CResult<NunchuckReading> {
+    pub fn read(&mut self) -> Result<NunchuckReading, NunchuckError<T::Error>> {
         let mut buf: [u8; 6] = [0; 6];
 
         // tell the nunchuck to prepare a sample
-        try!(self.i2cdev.smbus_write_byte(0x00));
+        try!(self.i2cdev.smbus_write_byte(0x00).map_err(NunchuckError::Error));
 
         // now, read it!
         thread::sleep_ms(10);
-        try!(self.i2cdev.read(&mut buf));
-        match NunchuckReading::from_data(&buf) {
-            Some(reading) => Ok(reading),
-            None => Err(I2CError::Other("Unable to Parse Data"))
-        }
+        try!(self.i2cdev.read(&mut buf).map_err(NunchuckError::Error));
+        NunchuckReading::from_data(&buf).ok_or(NunchuckError::ParseError)
     }
 }
 
@@ -105,13 +108,13 @@ mod test {
         // write out some "bad" values to start out with so we know the
         // write happens
         let mut i2cdev = MockI2CDevice::new();
-        i2cdev.regmap.smbus_write_byte_data(0xF0, 0xFF).unwrap();
-        i2cdev.regmap.smbus_write_byte_data(0xFB, 0xFF).unwrap();
+        i2cdev.smbus_write_byte_data(0xF0, 0xFF).unwrap();
+        i2cdev.smbus_write_byte_data(0xFB, 0xFF).unwrap();
 
         // these values must be written out for things to work
         let mut dev = Nunchuck::new(i2cdev).unwrap();
-        assert_eq!(dev.get_i2cdev().regmap.smbus_read_byte_data(0xF0).unwrap(), 0x55);
-        assert_eq!(dev.get_i2cdev().regmap.smbus_read_byte_data(0xFB).unwrap(), 0x00);
+        assert_eq!(dev.get_i2cdev().smbus_read_byte_data(0xF0).unwrap(), 0x55);
+        assert_eq!(dev.get_i2cdev().smbus_read_byte_data(0xFB).unwrap(), 0x00);
     }
 
     #[test]
@@ -130,7 +133,7 @@ mod test {
     #[test]
     fn test_read_sample_data() {
         let mut i2cdev = MockI2CDevice::new();
-        i2cdev.regmap.write(&[0, 127, 128, 191, 129, 144, 71]).unwrap();
+        i2cdev.write(&[0, 127, 128, 191, 129, 144, 71]).unwrap();
         let mut dev = Nunchuck::new(i2cdev).unwrap();
         let reading = dev.read().unwrap();
         assert_eq!(reading.joystick_x, 127);

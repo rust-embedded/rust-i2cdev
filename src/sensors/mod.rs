@@ -6,8 +6,6 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use core::I2CResult;
-
 pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 pub mod nunchuck;
@@ -25,24 +23,30 @@ pub struct AccelerometerSample {
 
 /// Trait for sensors that provide access to accelerometer readings (3-axis)
 pub trait Accelerometer {
+    type Error;
+
     /// Grab an accelerometer sample from the device
-    fn accelerometer_sample(&mut self) -> I2CResult<AccelerometerSample>;
+    fn accelerometer_sample(&mut self) -> Result<AccelerometerSample, Self::Error>;
 }
 
 /// Trait for sensors that provide access to temperature readings
 pub trait Thermometer {
+    type Error;
+
     /// Get na temperature from the sensor in degrees celsisus
     ///
     /// Returns Some(temperature) if available, otherwise returns
     /// None
-    fn temperature_celsius(&mut self) -> I2CResult<f32>;
+    fn temperature_celsius(&mut self) -> Result<f32, Self::Error>;
 }
 
 /// Trait for sensors that provide access to pressure readings
 pub trait Barometer {
+    type Error;
+
     /// Get a pressure reading from the sensor in kPa
     ///
     /// Returns Some(temperature) if avialable, otherwise returns
     /// None
-    fn pressure_kpa(&mut self) -> I2CResult<f32>;
+    fn pressure_kpa(&mut self) -> Result<f32, Self::Error>;
 }

@@ -7,10 +7,10 @@
 // except according to those terms.
 
 use ffi;
-use core::{I2CDevice, I2CError, I2CResult};
+use core::I2CDevice;
 use std::path::Path;
 use std::fs::File;
-use std::convert;
+use std::fmt;
 use nix;
 use std::io;
 use std::fs::OpenOptions;
@@ -22,19 +22,45 @@ pub struct LinuxI2CDevice {
     slave_address: u16,
 }
 
-impl convert::From<nix::Error> for I2CError {
-    #[allow(unused_variables)]
-    fn from(e: nix::Error) -> I2CError {
-        I2CError::Other("Uncategorized Nix Error")  // TODO
+pub enum LinuxI2CError {
+    Nix(nix::Error),
+    Io(io::Error),
+}
+
+impl From<nix::Error> for LinuxI2CError {
+    fn from(e: nix::Error) -> Self {
+        LinuxI2CError::Nix(e)
     }
 }
 
-impl convert::From<io::Error> for I2CError {
-    #[allow(unused_variables)]
-    fn from(e: io::Error) -> I2CError {
-        I2CError::Other("Uncategorized IO Error")  // TODO
+impl From<io::Error> for LinuxI2CError {
+    fn from(e: io::Error) -> Self {
+        LinuxI2CError::Io(e)
     }
 }
+
+impl From<LinuxI2CError> for io::Error {
+    fn from(e: LinuxI2CError) -> io::Error {
+        match e {
+            LinuxI2CError::Io(e) => e,
+            LinuxI2CError::Nix(e) => match e {
+                nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
+                nix::Error::InvalidPath => io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e)),
+            },
+        }
+    }
+}
+
+impl fmt::Debug for LinuxI2CError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            LinuxI2CError::Nix(ref e) => fmt::Debug::fmt(e, f),
+            LinuxI2CError::Io(ref e) => fmt::Debug::fmt(e, f),
+        }
+    }
+}
+
+type I2CResult<T> = Result<T, LinuxI2CError>;
 
 impl AsRawFd for LinuxI2CDevice {
     fn as_raw_fd(&self) -> RawFd {
@@ -44,12 +70,11 @@ impl AsRawFd for LinuxI2CDevice {
 
 impl LinuxI2CDevice {
     /// Create a new I2CDevice for the specified path
-    pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) -> I2CResult<LinuxI2CDevice> {
+    pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) -> Result<LinuxI2CDevice, LinuxI2CError> {
         let file = try!(OpenOptions::new()
                             .read(true)
                             .write(true)
-                            .open(path)
-                            .or_else(|e| Err(I2CError::from(e))));
+                            .open(path));
         let mut device = LinuxI2CDevice {
             devfile: file,
             slave_address: 0, /* will be set later */
@@ -78,22 +103,21 @@ impl LinuxI2CDevice {
 }
 
 impl I2CDevice for LinuxI2CDevice {
+    type Error = LinuxI2CError;
 
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> I2CResult<()> {
-        try!(self.devfile.read(data).or_else(|e| Err(I2CError::from(e))));
-        Ok(())
+        self.devfile.read(data).map_err(From::from).map(drop)
     }
 
     /// Write the provided buffer to the device
     fn write(&mut self, data: &[u8]) -> I2CResult<()> {
-        try!(self.devfile.write(data).or_else(|e| Err(I2CError::from(e))));
-        Ok(())
+        self.devfile.write(data).map_err(From::from).map(drop)
     }
 
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
     fn smbus_write_quick(&mut self, bit: bool) -> I2CResult<()> {
-        ffi::i2c_smbus_write_quick(self.as_raw_fd(), bit)
+        ffi::i2c_smbus_write_quick(self.as_raw_fd(), bit).map_err(From::from)
     }
 
     /// Read a single byte from a device, without specifying a device register
@@ -102,7 +126,7 @@ impl I2CDevice for LinuxI2CDevice {
     /// others, it is a shorthand if you want to read the same register as in
     /// the previous SMBus command.
     fn smbus_read_byte(&mut self) -> I2CResult<u8> {
-        ffi::i2c_smbus_read_byte(self.as_raw_fd())
+        ffi::i2c_smbus_read_byte(self.as_raw_fd()).map_err(From::from)
     }
 
     /// Write a single byte to a sdevice, without specifying a device register
@@ -110,36 +134,36 @@ impl I2CDevice for LinuxI2CDevice {
     /// This is the opposite operation as smbus_read_byte.  As with read_byte,
     /// no register is specified.
     fn smbus_write_byte(&mut self, value: u8) -> I2CResult<()> {
-        ffi::i2c_smbus_write_byte(self.as_raw_fd(), value)
+        ffi::i2c_smbus_write_byte(self.as_raw_fd(), value).map_err(From::from)
     }
 
     /// Read a single byte from a device, from a designated register
     ///
     /// The register is specified through the Comm byte.
     fn smbus_read_byte_data(&mut self, register: u8) -> I2CResult<u8> {
-        ffi::i2c_smbus_read_byte_data(self.as_raw_fd(), register)
+        ffi::i2c_smbus_read_byte_data(self.as_raw_fd(), register).map_err(From::from)
     }
 
     /// Write a single byte to a specific register on a device
     ///
     /// The register is specified through the Comm byte.
     fn smbus_write_byte_data(&mut self, register: u8, value: u8) -> I2CResult<()> {
-        ffi::i2c_smbus_write_byte_data(self.as_raw_fd(), register, value)
+        ffi::i2c_smbus_write_byte_data(self.as_raw_fd(), register, value).map_err(From::from)
     }
 
     /// Read 2 bytes form a given register on a device
     fn smbus_read_word_data(&mut self, register: u8) -> I2CResult<u16> {
-        ffi::i2c_smbus_read_word_data(self.as_raw_fd(), register)
+        ffi::i2c_smbus_read_word_data(self.as_raw_fd(), register).map_err(From::from)
     }
 
     /// Write 2 bytes to a given register on a device
     fn smbus_write_word_data(&mut self, register: u8, value: u16) -> I2CResult<()> {
-        ffi::i2c_smbus_write_word_data(self.as_raw_fd(), register, value)
+        ffi::i2c_smbus_write_word_data(self.as_raw_fd(), register, value).map_err(From::from)
     }
 
     /// Select a register, send 16 bits of data to it, and read 16 bits of data
     fn smbus_process_word(&mut self, register: u8, value: u16) -> I2CResult<u16> {
-        ffi::i2c_smbus_process_call(self.as_raw_fd(), register, value)
+        ffi::i2c_smbus_process_call(self.as_raw_fd(), register, value).map_err(From::from)
     }
 
     /// Read a block of up to 32 bytes from a device
@@ -148,7 +172,7 @@ impl I2CDevice for LinuxI2CDevice {
     /// byte.  This code returns a correctly sized vector containing the
     /// count bytes read from the device.
     fn smbus_read_block_data(&mut self, register: u8) -> I2CResult<Vec<u8>> {
-        ffi::i2c_smbus_read_block_data(self.as_raw_fd(), register)
+        ffi::i2c_smbus_read_block_data(self.as_raw_fd(), register).map_err(From::from)
     }
 
     /// Write a block of up to 32 bytes to a device
@@ -157,12 +181,12 @@ impl I2CDevice for LinuxI2CDevice {
     /// a device, to a designated register that is specified through the
     /// Comm byte. The amount of data is specified in the Count byte.
     fn smbus_write_block_data(&mut self, register: u8, values: &[u8]) -> I2CResult<()> {
-        ffi::i2c_smbus_write_block_data(self.as_raw_fd(), register, values)
+        ffi::i2c_smbus_write_block_data(self.as_raw_fd(), register, values).map_err(From::from)
     }
 
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> I2CResult<()> {
-        ffi::i2c_smbus_write_i2c_block_data(self.as_raw_fd(), register, values)
+        ffi::i2c_smbus_write_i2c_block_data(self.as_raw_fd(), register, values).map_err(From::from)
     }
 }
