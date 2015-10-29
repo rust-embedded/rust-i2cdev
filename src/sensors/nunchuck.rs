@@ -9,7 +9,9 @@
 // Reads data from Wii Nunchuck
 
 use std::io::prelude::*;
+use std::error::Error;
 use std::thread;
+use std::fmt;
 
 use core::I2CDevice;
 
@@ -19,6 +21,31 @@ pub const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 pub enum NunchuckError<E> {
     Error(E),
     ParseError,
+}
+
+impl<E: Error> fmt::Display for NunchuckError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            NunchuckError::Error(ref e) => fmt::Display::fmt(e, f),
+            NunchuckError::ParseError => fmt::Display::fmt(self.description(), f),
+        }
+    }
+}
+
+impl<E: Error> Error for NunchuckError<E> {
+    fn description(&self) -> &str {
+        match *self {
+            NunchuckError::Error(ref e) => e.description(),
+            NunchuckError::ParseError => "Unable to Parse Data",
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            NunchuckError::Error(ref e) => Some(e),
+            NunchuckError::ParseError => None,
+        }
+    }
 }
 
 // TODO: Move Nunchuck code out to be an actual sensor and add tests

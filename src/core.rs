@@ -7,6 +7,7 @@
 // except according to those terms.
 
 use byteorder::{ByteOrder, LittleEndian};
+use std::error::Error;
 
 /// Interface to an I2C Slave Device from an I2C Master
 ///
@@ -14,7 +15,7 @@ use byteorder::{ByteOrder, LittleEndian};
 /// in use and the address of the slave device.  The trait is based on the
 /// Linux i2cdev interface.
 pub trait I2CDevice {
-    type Error;
+    type Error: Error;
 
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> Result<(), Self::Error>;
