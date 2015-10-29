@@ -8,6 +8,7 @@
 
 use ffi;
 use core::I2CDevice;
+use std::error::Error;
 use std::path::Path;
 use std::fs::File;
 use std::fmt;
@@ -22,6 +23,7 @@ pub struct LinuxI2CDevice {
     slave_address: u16,
 }
 
+#[derive(Debug)]
 pub enum LinuxI2CError {
     Nix(nix::Error),
     Io(io::Error),
@@ -55,11 +57,27 @@ impl From<LinuxI2CError> for io::Error {
     }
 }
 
-impl fmt::Debug for LinuxI2CError {
+impl fmt::Display for LinuxI2CError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            LinuxI2CError::Nix(ref e) => fmt::Debug::fmt(e, f),
-            LinuxI2CError::Io(ref e) => fmt::Debug::fmt(e, f),
+            LinuxI2CError::Nix(ref e) => fmt::Display::fmt(e, f),
+            LinuxI2CError::Io(ref e) => fmt::Display::fmt(e, f),
+        }
+    }
+}
+
+impl Error for LinuxI2CError {
+    fn description(&self) -> &str {
+        match *self {
+            LinuxI2CError::Io(ref e) => e.description(),
+            LinuxI2CError::Nix(ref e) => e.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        match *self {
+            LinuxI2CError::Io(ref e) => Some(e),
+            LinuxI2CError::Nix(ref e) => Some(e),
         }
     }
 }

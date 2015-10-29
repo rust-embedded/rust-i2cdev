@@ -81,7 +81,7 @@ impl MPL115A2Coefficients {
     /// This should be built from a read of registers 0x04-0x0B in
     /// order.  This gets the raw, unconverted value of each
     /// coefficient.
-    pub fn new<E>(i2cdev: &mut I2CDevice<Error = E>) -> Result<MPL115A2Coefficients, E> {
+    pub fn new<E: Error>(i2cdev: &mut I2CDevice<Error=E>) -> Result<MPL115A2Coefficients, E> {
         let mut buf: [u8; 8] = [0; 8];
         try!(i2cdev.write(&[REGISTER_ADDR_A0]));
         try!(i2cdev.read(&mut buf));
@@ -97,7 +97,7 @@ impl MPL115A2Coefficients {
 
 impl MPL115A2RawReading {
     /// Create a new reading from the provided I2C Device
-    pub fn new<E>(i2cdev: &mut I2CDevice<Error = E>) -> Result<MPL115A2RawReading, E> {
+    pub fn new<E: Error>(i2cdev: &mut I2CDevice<Error=E>) -> Result<MPL115A2RawReading, E> {
         // tell the chip to do an ADC read so we can get updated values
         try!(i2cdev.smbus_write_byte_data(REGISTER_ADDR_START_CONVERSION, 0x00));
 

@@ -6,6 +6,8 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
+use std::error::Error;
+
 pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 pub mod nunchuck;
@@ -23,7 +25,7 @@ pub struct AccelerometerSample {
 
 /// Trait for sensors that provide access to accelerometer readings (3-axis)
 pub trait Accelerometer {
-    type Error;
+    type Error: Error;
 
     /// Grab an accelerometer sample from the device
     fn accelerometer_sample(&mut self) -> Result<AccelerometerSample, Self::Error>;
@@ -31,7 +33,7 @@ pub trait Accelerometer {
 
 /// Trait for sensors that provide access to temperature readings
 pub trait Thermometer {
-    type Error;
+    type Error: Error;
 
     /// Get na temperature from the sensor in degrees celsisus
     ///
@@ -42,7 +44,7 @@ pub trait Thermometer {
 
 /// Trait for sensors that provide access to pressure readings
 pub trait Barometer {
-    type Error;
+    type Error: Error;
 
     /// Get a pressure reading from the sensor in kPa
     ///
