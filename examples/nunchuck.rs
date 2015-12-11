@@ -34,19 +34,21 @@ Options:
 
 fn main() {
     let args = Docopt::new(USAGE)
-        .and_then(|d| d.argv(args().into_iter()).parse())
-        .unwrap_or_else(|e| e.exit());
+                   .and_then(|d| d.argv(args().into_iter()).parse())
+                   .unwrap_or_else(|e| e.exit());
     let device = args.get_str("<device>");
     let i2cdev = LinuxI2CDevice::new(device, NUNCHUCK_SLAVE_ADDR).unwrap();
     match Nunchuck::new(i2cdev) {
-        Err(err) => { println!("Unable to open {:?}, {:?}", device, err); }
+        Err(err) => {
+            println!("Unable to open {:?}, {:?}", device, err);
+        }
         Ok(mut nunchuck) => {
             loop {
                 match nunchuck.read() {
                     Ok(reading) => println!("{:?}", reading),
-                    Err(err)    => println!("Error: {:?}", err),
+                    Err(err) => println!("Error: {:?}", err),
                 };
             }
-        },
+        }
     }
 }

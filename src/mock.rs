@@ -16,7 +16,6 @@ pub struct I2CRegisterMap {
 }
 
 impl I2CRegisterMap {
-
     pub fn new() -> I2CRegisterMap {
         I2CRegisterMap {
             registers: [0x00; 0xFF],
@@ -53,7 +52,6 @@ impl I2CRegisterMap {
         self.offset = offset + remdata.len();
         Ok(())
     }
-
 }
 
 pub struct MockI2CDevice {
@@ -63,9 +61,7 @@ pub struct MockI2CDevice {
 
 impl MockI2CDevice {
     pub fn new() -> MockI2CDevice {
-        MockI2CDevice {
-            regmap: I2CRegisterMap::new(),
-        }
+        MockI2CDevice { regmap: I2CRegisterMap::new() }
     }
 }
 

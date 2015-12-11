@@ -67,7 +67,8 @@ pub struct ADXL345Accelerometer<T: I2CDevice + Sized> {
     i2cdev: T,
 }
 
-impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
+impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized
+{
     /// Create a new accelerometer handle for the given path/addr
     ///
     /// The `SLAVE_ADDR_*` constants from this module should be
@@ -99,7 +100,8 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized {
 const ACCEL_RANGE: f32 = 2.0;  // +- 2G (with defaults)
 const ACCEL_BITS: u8 = 10;  // 10-bit resolution
 
-impl<T> Accelerometer for ADXL345Accelerometer<T> where T: I2CDevice + Sized {
+impl<T> Accelerometer for ADXL345Accelerometer<T> where T: I2CDevice + Sized
+{
     type Error = T::Error;
 
     fn accelerometer_sample(&mut self) -> Result<AccelerometerSample, T::Error> {

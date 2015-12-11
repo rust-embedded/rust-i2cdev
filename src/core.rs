@@ -22,10 +22,9 @@ pub trait I2CDevice {
     /// Write the provided buffer to the device
     fn write(&mut self, data: &[u8]) -> Result<(), Self::Error>;
 
-    /*
-     * The following implementations are defaults that seek to match the
-     * kernel implementation where possible.
-     */
+    // The following implementations are defaults that seek to match the
+    // kernel implementation where possible.
+    //
 
     /// This sends a single bit to the device, at the place of the Rd/Wr bit
     fn smbus_write_quick(&mut self, bit: bool) -> Result<(), Self::Error>;

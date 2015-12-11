@@ -9,7 +9,7 @@
 pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 pub mod nunchuck;
-//pub mod bno055_orientation;
+// pub mod bno055_orientation;
 
 #[derive(Debug)]
 pub struct AccelerometerSample {

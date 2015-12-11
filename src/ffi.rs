@@ -133,7 +133,7 @@ enum I2CSMBusSize {
     I2C_SMBUS_PROC_CALL = 4,
     I2C_SMBUS_BLOCK_DATA = 5,
     I2C_SMBUS_I2C_BLOCK_BROKEN = 6,
-    I2C_SMBUS_BLOCK_PROC_CALL = 7, /* SMBus 2.0 */
+    I2C_SMBUS_BLOCK_PROC_CALL = 7, // SMBus 2.0
     I2C_SMBUS_I2C_BLOCK_DATA = 8,
 }
 
@@ -208,7 +208,13 @@ pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), I2CError> {
         true => I2CSMBusReadWrite::I2C_SMBUS_READ,
         false => I2CSMBusReadWrite::I2C_SMBUS_WRITE,
     };
-    unsafe { i2c_smbus_access(fd, read_write, 0, I2CSMBusSize::I2C_SMBUS_QUICK, ptr::null_mut()) }
+    unsafe {
+        i2c_smbus_access(fd,
+                         read_write,
+                         0,
+                         I2CSMBusSize::I2C_SMBUS_QUICK,
+                         ptr::null_mut())
+    }
 }
 
 #[inline]

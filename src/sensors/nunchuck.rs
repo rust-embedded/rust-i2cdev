@@ -27,9 +27,9 @@ pub enum NunchuckError<E> {
 pub struct NunchuckReading {
     joystick_x: u8,
     joystick_y: u8,
-    accel_x: u16,  // 10-bit
-    accel_y: u16,  // 10-bit
-    accel_z: u16,  // 10-bit
+    accel_x: u16, // 10-bit
+    accel_y: u16, // 10-bit
+    accel_z: u16, // 10-bit
     c_button_pressed: bool,
     z_button_pressed: bool,
 }
@@ -56,7 +56,8 @@ pub struct Nunchuck<T: I2CDevice> {
     i2cdev: T,
 }
 
-impl<T> Nunchuck<T> where T: I2CDevice {
+impl<T> Nunchuck<T> where T: I2CDevice
+{
     /// Create a new Wii Nunchuck
     ///
     /// This method will open the provide i2c device file and will

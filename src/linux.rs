@@ -43,10 +43,14 @@ impl From<LinuxI2CError> for io::Error {
     fn from(e: LinuxI2CError) -> io::Error {
         match e {
             LinuxI2CError::Io(e) => e,
-            LinuxI2CError::Nix(e) => match e {
-                nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
-                nix::Error::InvalidPath => io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e)),
-            },
+            LinuxI2CError::Nix(e) => {
+                match e {
+                    nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
+                    nix::Error::InvalidPath => {
+                        io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e))
+                    }
+                }
+            }
         }
     }
 }
@@ -70,14 +74,16 @@ impl AsRawFd for LinuxI2CDevice {
 
 impl LinuxI2CDevice {
     /// Create a new I2CDevice for the specified path
-    pub fn new<P: AsRef<Path>>(path: P, slave_address: u16) -> Result<LinuxI2CDevice, LinuxI2CError> {
+    pub fn new<P: AsRef<Path>>(path: P,
+                               slave_address: u16)
+                               -> Result<LinuxI2CDevice, LinuxI2CError> {
         let file = try!(OpenOptions::new()
                             .read(true)
                             .write(true)
                             .open(path));
         let mut device = LinuxI2CDevice {
             devfile: file,
-            slave_address: 0, /* will be set later */
+            slave_address: 0, // will be set later
         };
         try!(device.set_slave_address(slave_address));
         Ok(device)
@@ -99,7 +105,6 @@ impl LinuxI2CDevice {
         self.slave_address = slave_address;
         Ok(())
     }
-
 }
 
 impl I2CDevice for LinuxI2CDevice {

@@ -81,7 +81,7 @@ impl MPL115A2Coefficients {
     /// This should be built from a read of registers 0x04-0x0B in
     /// order.  This gets the raw, unconverted value of each
     /// coefficient.
-    pub fn new<E>(i2cdev: &mut I2CDevice<Error=E>) -> Result<MPL115A2Coefficients, E> {
+    pub fn new<E>(i2cdev: &mut I2CDevice<Error = E>) -> Result<MPL115A2Coefficients, E> {
         let mut buf: [u8; 8] = [0; 8];
         try!(i2cdev.write(&[REGISTER_ADDR_A0]));
         try!(i2cdev.read(&mut buf));
@@ -96,9 +96,8 @@ impl MPL115A2Coefficients {
 
 
 impl MPL115A2RawReading {
-
     /// Create a new reading from the provided I2C Device
-    pub fn new<E>(i2cdev: &mut I2CDevice<Error=E>) -> Result<MPL115A2RawReading, E> {
+    pub fn new<E>(i2cdev: &mut I2CDevice<Error = E>) -> Result<MPL115A2RawReading, E> {
         // tell the chip to do an ADC read so we can get updated values
         try!(i2cdev.smbus_write_byte_data(REGISTER_ADDR_START_CONVERSION, 0x00));
 
@@ -112,7 +111,10 @@ impl MPL115A2RawReading {
         try!(i2cdev.read(&mut buf));
         let padc: u16 = BigEndian::read_u16(&buf) >> 6;
         let tadc: u16 = BigEndian::read_u16(&buf[2..]) >> 6;
-        Ok(MPL115A2RawReading { padc: padc, tadc: tadc })
+        Ok(MPL115A2RawReading {
+            padc: padc,
+            tadc: tadc,
+        })
     }
 
     /// Calculate the temperature in centrigrade for this reading
@@ -134,15 +136,20 @@ impl MPL115A2RawReading {
 }
 
 
-impl<T> MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized {
+impl<T> MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized
+{
     /// Create sensor accessor for MPL115A2 on the provided i2c bus path
     pub fn new(mut i2cdev: T) -> Result<MPL115A2BarometerThermometer<T>, T::Error> {
         let coeff = try!(MPL115A2Coefficients::new(&mut i2cdev));
-        Ok(MPL115A2BarometerThermometer { i2cdev: i2cdev, coeff: coeff })
+        Ok(MPL115A2BarometerThermometer {
+            i2cdev: i2cdev,
+            coeff: coeff,
+        })
     }
 }
 
-impl<T> Barometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized {
+impl<T> Barometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized
+{
     type Error = T::Error;
 
     fn pressure_kpa(&mut self) -> Result<f32, T::Error> {
@@ -151,7 +158,8 @@ impl<T> Barometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized
     }
 }
 
-impl<T> Thermometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized {
+impl<T> Thermometer for MPL115A2BarometerThermometer<T> where T: I2CDevice + Sized
+{
     type Error = T::Error;
 
     fn temperature_celsius(&mut self) -> Result<f32, T::Error> {
@@ -181,10 +189,9 @@ mod tests {
     }
 
     fn make_dev(mut i2cdev: MockI2CDevice) -> MPL115A2BarometerThermometer<MockI2CDevice> {
-        (&mut i2cdev.regmap).write_regs(0x04, &[74, 98, // A0
-                                                165, 150, // B1
-                                                182, 106, // B2
-                                                63, 232]); // C12
+        (&mut i2cdev.regmap).write_regs(0x04,
+                                        &[74, 98 /* A0 */, 165, 150 /* B1 */, 182,
+                                          106 /* B2 */, 63, 232]); // C12
         MPL115A2BarometerThermometer::new(i2cdev).unwrap()
     }
 
