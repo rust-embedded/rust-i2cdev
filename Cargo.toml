@@ -14,10 +14,10 @@ https://www.kernel.org/doc/Documentation/i2c/dev-interface
 """
 
 [dependencies]
-libc = "^0.2.2"
-bitflags = "^0.3.3"
-byteorder = "^0.4.2"
-nix = "^0.5.0"
+libc = "0.2.7"
+bitflags = "0.5"
+byteorder = "0.4.2"
+nix = "0.5"
 
 [dev-dependencies]
 docopt = "^0.6"
