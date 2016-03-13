@@ -1,11 +1,11 @@
 Rust Spidev
 ===========
 
-[![Build Status](https://travis-ci.org/posborne/rust-i2cdev.svg?branch=master)](https://travis-ci.org/posborne/rust-i2cdev)
+[![Build Status](https://travis-ci.org/rust-embedded/rust-i2cdev.svg?branch=master)](https://travis-ci.org/rust-embedded/rust-i2cdev)
 [![Version](https://img.shields.io/crates/v/i2cdev.svg)](https://crates.io/crates/i2cdev)
-[![License](https://img.shields.io/crates/l/i2cdev.svg)](https://github.com/posborne/rust-i2cdev/blob/master/README.md#license)
+[![License](https://img.shields.io/crates/l/i2cdev.svg)](https://github.com/rust-embedded/rust-i2cdev/blob/master/README.md#license)
 
-[Documentation](https://posborne.github.io/rust-i2cdev)
+[Documentation](https://rust-embedded.github.io/rust-i2cdev)
 
 The Rust `i2cdev` crate seeks to provide full access to the Linux i2cdev
 driver interface in Rust without the need to wrap any C code or directly make
@@ -18,7 +18,7 @@ Example/API
 
 The source includes an example of using the library to talk to a Wii
 Nunchuck (which has an i2c interface).
-[Go View the Example Example](https://github.com/posborne/rust-i2cdev/blob/master/examples/nunchuck.rs).
+[Go View the Example Example](https://github.com/rust-embedded/rust-i2cdev/blob/master/examples/nunchuck.rs).
 
 Here's a real quick example showing the guts of how you create a
 device and start talking to it...  This device only requires basic
