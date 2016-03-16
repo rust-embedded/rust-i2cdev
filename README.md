@@ -22,7 +22,9 @@ Nunchuck (which has an i2c interface).
 
 Here's a real quick example showing the guts of how you create a
 device and start talking to it...  This device only requires basic
-functions (read/write) which are done via the Read/Write traits.
+functions (read/write) which are done via the Read/Write traits (if
+you actually want to use the Wii Nunchuck you should use
+[`i2cdev::sensors::nunchuck::Nunchuck`][nunchuck]:
 
 ```rust
 extern crate i2cdev;
@@ -31,18 +33,21 @@ use std::thread;
 
 const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 
-// real code should not use unwrap() so liberally
+// real code should probably not use unwrap()
 fn i2cfun() -> Result<(), I2CError> {
     let mut dev = try!(I2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR));
+
+    // init sequence
     try!(self.i2cdev.smbus_write_byte_data(0xF0, 0x55));
-    try!(self.i2cdev-smbus_write_byte_data(0xFB, 0x00))
+    try!(self.i2cdev.smbus_write_byte_data(0xFB, 0x00));
     thread::sleep_ms(100);
+
     loop {
         let mut buf: [u8: 6] = [0: 6];
-        self.i2cdev.write_all(&[0x00]).unwrap();
+        self.i2cdev.smbus_write_byte(0x00).unwrap();
         thread::sleep_ms(10);
         self.i2cdev.read(&mut buf).unwrap();
-        println!("Reading: {:?}", buf); 
+        println!("Reading: {:?}", buf);
     }
 }
 ```
@@ -65,6 +70,8 @@ pub trait I2CSMBus {
     fn smbus_process_block(&self, register: u8, values: &[u8]) -> Result<(), Error>;
 }
 ```
+
+[nunchuck]: http://rust-embedded.github.io/rust-i2cdev/i2cdev/sensors/nunchuck/struct.Nunchuck.html
 
 Features
 --------
