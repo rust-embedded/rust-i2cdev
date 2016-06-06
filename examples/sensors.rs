@@ -26,14 +26,12 @@ const USAGE: &'static str = "
 Reading sensor data from a variety of sensors
 
 Usage:
-  sensors \
-                             <device>
+  sensors <device>
   sensors (-h | --help)
   sensors --version
 
 Options:
-  -h \
-                             --help    Show this help text.
+  -h --help    Show this help text.
   --version    Show version.
 ";
 
