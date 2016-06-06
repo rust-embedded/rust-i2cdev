@@ -18,11 +18,11 @@ https://www.kernel.org/doc/Documentation/i2c/dev-interface
 libc = "^0.2.7"
 bitflags = "^0.5.0"
 byteorder = "^0.4.2"
-nix = "^0.5.0"
+nix = "^0.6.0"
 
 [dev-dependencies]
 docopt = "^0.6.78"
-skeptic = "0.4"
+skeptic = "^0.5"
 
 [build-dependencies]
-skeptic = "0.4"
+skeptic = "^0.5"
