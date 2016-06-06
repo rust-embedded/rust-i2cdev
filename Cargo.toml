@@ -1,6 +1,7 @@
 [package]
 
 name = "i2cdev"
+build = "build.rs"
 version = "0.3.0"
 authors = ["Paul Osborne <osbpau@gmail.com>"]
 license = "MIT/Apache-2.0"
@@ -21,3 +22,7 @@ nix = "^0.5.0"
 
 [dev-dependencies]
 docopt = "^0.6.78"
+skeptic = "0.4"
+
+[build-dependencies]
+skeptic = "0.4"
