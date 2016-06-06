@@ -8,7 +8,7 @@
 use core::I2CDevice;
 use std::io;
 
-type I2CResult<T> = io::Result<T>;
+pub type I2CResult<T> = io::Result<T>;
 
 pub struct I2CRegisterMap {
     registers: [u8; 0xFF],
