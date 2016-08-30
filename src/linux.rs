@@ -196,6 +196,11 @@ impl I2CDevice for LinuxI2CDevice {
         ffi::i2c_smbus_read_block_data(self.as_raw_fd(), register).map_err(From::from)
     }
 
+    /// Read a block of up to 32 bytes from a device via i2c_smbus_i2c_read_block_data
+    fn smbus_read_i2c_block_data(&mut self, register: u8, len: u8) -> Result<Vec<u8>, LinuxI2CError> {
+        ffi::i2c_smbus_read_i2c_block_data(self.as_raw_fd(), register, len).map_err(From::from)
+    }
+
     /// Write a block of up to 32 bytes to a device
     ///
     /// The opposite of the Block Read command, this writes up to 32 bytes to
