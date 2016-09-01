@@ -8,9 +8,9 @@
 
 // Reads data from Wii Nunchuck
 
-use std::io::prelude::*;
 use std::error::Error;
 use std::thread;
+use std::time::Duration;
 use std::fmt;
 
 use core::I2CDevice;
@@ -118,7 +118,7 @@ impl<T> Nunchuck<T> where T: I2CDevice
         try!(self.i2cdev.smbus_write_byte(0x00).map_err(NunchuckError::Error));
 
         // now, read it!
-        thread::sleep_ms(10);
+        thread::sleep(Duration::from_millis(10));
         try!(self.i2cdev.read(&mut buf).map_err(NunchuckError::Error));
         NunchuckReading::from_data(&buf).ok_or(NunchuckError::ParseError)
     }

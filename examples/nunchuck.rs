@@ -11,7 +11,6 @@
 extern crate i2cdev;
 extern crate docopt;
 
-use i2cdev::core::*;
 use i2cdev::linux::*;
 use i2cdev::sensors::nunchuck::*;
 use std::env::args;
