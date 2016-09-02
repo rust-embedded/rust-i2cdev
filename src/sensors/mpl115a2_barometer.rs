@@ -10,6 +10,7 @@
 
 use sensors::{Thermometer, Barometer};
 use std::thread;
+use std::time::Duration;
 use std::error::Error;
 use core::I2CDevice;
 use byteorder::{ByteOrder, BigEndian};
@@ -102,7 +103,7 @@ impl MPL115A2RawReading {
         try!(i2cdev.smbus_write_byte_data(REGISTER_ADDR_START_CONVERSION, 0x00));
 
         // maximum conversion time is 3ms
-        thread::sleep_ms(3);
+        thread::sleep(Duration::from_millis(3));
 
         // The SMBus functions read word values as little endian but that is not
         // what we want

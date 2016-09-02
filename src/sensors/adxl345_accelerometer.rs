@@ -10,7 +10,7 @@
 
 use sensors::{Accelerometer, AccelerometerSample};
 use core::I2CDevice;
-use byteorder::{ByteOrder, LittleEndian, ReadBytesExt};
+use byteorder::{ByteOrder, LittleEndian};
 
 // TODO: read/write data format (for now, assumed 0x00)
 

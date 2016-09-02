@@ -90,6 +90,11 @@ pub trait I2CDevice {
     /// count bytes read from the device.
     fn smbus_read_block_data(&mut self, register: u8) -> Result<Vec<u8>, Self::Error>;
 
+    /// Read a block of up to 32 bytes from a device
+    ///
+    /// Uses read_i2c_block_data instead read_block_data.
+    fn smbus_read_i2c_block_data(&mut self, register: u8, len: u8) -> Result<Vec<u8>, Self::Error>;
+
     /// Write a block of up to 32 bytes to a device
     ///
     /// The opposite of the Block Read command, this writes up to 32 bytes to

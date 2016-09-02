@@ -1,14 +1,5 @@
 language: rust
 sudo: false
-rust:
-- 1.3.0
-- 1.4.0
-- 1.5.0
-- 1.6.0
-- 1.7.0
-- stable
-- beta
-- nightly
 env:
   global:
   - secure: gZdvTl4i1QfHQaCUPcVpnLtlrsE4WldSm99AD9C9jiMgjlzhhI4kQmIhssNFhA1BWDW6qDazrKnw4ZT1GA/rlmGSpLxs2lfBNTjPF0CJMVSTEQ1OaFcDGajziTTCSMh7jDml1/CFHuGSc+rS4bNv5wu0bj+pz3ZSRSuB7Vgoa0aRD8JQKc+phnIoXMCCfIh9vxlXWvO9mDMoR84/B35/gN/vWIi3+uuHgvvdKMK8qBbJ0ne25kOIA5CpXzJmOBFHCGblVQM4+AiTWvWtoXJjMcJXn9HZ2g3HWhrnixG07Ee1RrjUPo25tsxrBowHSGq9Bbo+jzmOmx03CRnCBHyXk6e12MXrfVFWRdmFaf7Sl/RBlz8Y2BRgktp8ihB6JQmjNuRptE4RdnWn6CU9liSQ5nzzGEl2ZtBrzN9GR3qyhq5W9e09v93MZfBr0svp/rtBoqDANfkpxvmWqtgO3fjN1fdf092sEcQfq3d7e6NaLSWKkI6V9wJnJ9UulPDAaqGVm8RrA9b0vJR6ouCf5ChZgYirz6LW5uPpMkf+cjESU9JxnX9xVB8tfPSoNrPKolRC/WRZ8gPbRmx0vF4wrDk8z9Fks5nHGwDsPdYe60Qe8m6ZclncCkpUzy2yAZWe/kiDaseOwNbSqEUZW80hLyHpuGi1IFpGBQfc8mYMPvqOHa8=

@@ -15,6 +15,7 @@ extern crate i2cdev;
 extern crate docopt;
 
 use std::thread;
+use std::time::Duration;
 use std::env::args;
 use docopt::Docopt;
 use i2cdev::sensors::{Thermometer, Barometer, Accelerometer};
@@ -56,6 +57,6 @@ fn main() {
         println!("Accel:       {:?}", accel);
         println!("Accel Tot:   {:?}",
                  (accel.x.powi(2) + accel.y.powi(2) + accel.z.powi(2)).sqrt());
-        thread::sleep_ms(1000);
+        thread::sleep(Duration::from_millis(1000));
     }
 }
