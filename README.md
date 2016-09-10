@@ -1,4 +1,4 @@
-Rust Spidev
+Rust I2cdev
 ===========
 
 [![Build Status](https://travis-ci.org/rust-embedded/rust-i2cdev.svg?branch=master)](https://travis-ci.org/rust-embedded/rust-i2cdev)
