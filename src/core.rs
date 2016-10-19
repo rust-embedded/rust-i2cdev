@@ -60,7 +60,7 @@ pub trait I2CDevice {
         self.write(&mut [register, value])
     }
 
-    /// Read 2 bytes form a given register on a device (lsb first)
+    /// Read 2 bytes from a given register on a device (lsb first)
     fn smbus_read_word_data(&mut self, register: u8) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0x00; 2];
         try!(self.smbus_write_byte(register));
