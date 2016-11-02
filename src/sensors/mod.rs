@@ -35,7 +35,7 @@ pub trait Accelerometer {
 pub trait Thermometer {
     type Error: Error;
 
-    /// Get na temperature from the sensor in degrees celsisus
+    /// Get a temperature from the sensor in degrees celsius
     ///
     /// Returns Some(temperature) if available, otherwise returns
     /// None
