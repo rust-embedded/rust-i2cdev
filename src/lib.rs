@@ -27,7 +27,6 @@ extern crate nix;
 mod ffi;
 
 pub mod core;
-pub mod sensors;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 pub mod linux;
