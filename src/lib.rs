@@ -23,7 +23,9 @@ extern crate bitflags;
 #[macro_use]
 extern crate nix;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 mod ffi;
+
 pub mod core;
 pub mod sensors;
 

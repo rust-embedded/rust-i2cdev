@@ -21,6 +21,7 @@ use docopt::Docopt;
 use i2cdev::sensors::{Thermometer, Barometer, Accelerometer};
 use i2cdev::sensors::mpl115a2_barometer::*;
 use i2cdev::sensors::adxl345_accelerometer::*;
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::*;
 
 const USAGE: &'static str = "
@@ -36,6 +37,10 @@ Options:
   --version    Show version.
 ";
 
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+fn main() {}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn main() {
     let args = Docopt::new(USAGE)
                    .and_then(|d| d.argv(args().into_iter()).parse())

@@ -11,11 +11,13 @@
 extern crate i2cdev;
 extern crate docopt;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::*;
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::sensors::nunchuck::*;
+
 use std::env::args;
 use docopt::Docopt;
-
 
 const USAGE: &'static str = "
 Reading Wii Nunchuck data via Linux i2cdev.
@@ -30,7 +32,10 @@ Options:
   --version    Show version.
 ";
 
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+fn main() {}
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 fn main() {
     let args = Docopt::new(USAGE)
                    .and_then(|d| d.argv(args().into_iter()).parse())
