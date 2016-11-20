@@ -8,9 +8,9 @@
 
 #![allow(dead_code)] // register map
 
-use sensors::{Accelerometer, AccelerometerSample};
-use core::I2CDevice;
 use byteorder::{ByteOrder, LittleEndian};
+use core::I2CDevice;
+use sensors::{Accelerometer, AccelerometerSample};
 
 // TODO: read/write data format (for now, assumed 0x00)
 
@@ -67,7 +67,8 @@ pub struct ADXL345Accelerometer<T: I2CDevice + Sized> {
     i2cdev: T,
 }
 
-impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized
+impl<T> ADXL345Accelerometer<T>
+    where T: I2CDevice + Sized
 {
     /// Create a new accelerometer handle for the given path/addr
     ///
@@ -76,17 +77,17 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized
     /// address (dependent on `ALT ADDRESS` pin)
     pub fn new(mut i2cdev: T) -> Result<ADXL345Accelerometer<T>, T::Error> {
         // setup standy mode to configure
-        try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00));
+        i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00)?;
 
         // configure some defaults
-        try!(i2cdev.smbus_write_byte_data(REGISTER_BW_RATE, ADXL345DataRate::RATE_1600HZ as u8));
-        try!(i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08));
-        try!(i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD));
-        try!(i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03));
-        try!(i2cdev.smbus_write_byte_data(REGISTER_OFSZ, 0xFE));
+        i2cdev.smbus_write_byte_data(REGISTER_BW_RATE, ADXL345DataRate::RATE_1600HZ as u8)?;
+        i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08)?;
+        i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD)?;
+        i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03)?;
+        i2cdev.smbus_write_byte_data(REGISTER_OFSZ, 0xFE)?;
 
         // put device in measurement mode
-        try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08));
+        i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08)?;
 
         Ok(ADXL345Accelerometer { i2cdev: i2cdev })
     }
@@ -100,7 +101,8 @@ impl<T> ADXL345Accelerometer<T> where T: I2CDevice + Sized
 const ACCEL_RANGE: f32 = 2.0;  // +- 2G (with defaults)
 const ACCEL_BITS: u8 = 10;  // 10-bit resolution
 
-impl<T> Accelerometer for ADXL345Accelerometer<T> where T: I2CDevice + Sized
+impl<T> Accelerometer for ADXL345Accelerometer<T>
+    where T: I2CDevice + Sized
 {
     type Error = T::Error;
 
@@ -108,8 +110,8 @@ impl<T> Accelerometer for ADXL345Accelerometer<T> where T: I2CDevice + Sized
         // datasheet recommends multi-byte read to avoid reading
         // an inconsistent set of data
         let mut buf: [u8; 6] = [0u8; 6];
-        try!(self.i2cdev.write(&[REGISTER_X0]));
-        try!(self.i2cdev.read(&mut buf));
+        self.i2cdev.write(&[REGISTER_X0])?;
+        self.i2cdev.read(&mut buf)?;
 
         let x: i16 = LittleEndian::read_i16(&[buf[0], buf[1]]);
         let y: i16 = LittleEndian::read_i16(&[buf[2], buf[3]]);

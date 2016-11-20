@@ -6,17 +6,17 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use ffi;
 use core::I2CDevice;
-use std::error::Error;
-use std::path::Path;
-use std::fs::File;
-use std::fmt;
+use ffi;
 use nix;
-use std::io;
+use std::error::Error;
+use std::fmt;
+use std::fs::File;
 use std::fs::OpenOptions;
+use std::io;
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
+use std::path::Path;
 
 pub struct LinuxI2CDevice {
     devfile: File,
@@ -93,15 +93,14 @@ impl LinuxI2CDevice {
     pub fn new<P: AsRef<Path>>(path: P,
                                slave_address: u16)
                                -> Result<LinuxI2CDevice, LinuxI2CError> {
-        let file = try!(OpenOptions::new()
-                            .read(true)
-                            .write(true)
-                            .open(path));
+        let file = OpenOptions::new().read(true)
+            .write(true)
+            .open(path)?;
         let mut device = LinuxI2CDevice {
             devfile: file,
             slave_address: 0, // will be set later
         };
-        try!(device.set_slave_address(slave_address));
+        device.set_slave_address(slave_address)?;
         Ok(device)
     }
 
@@ -117,7 +116,7 @@ impl LinuxI2CDevice {
     /// necessary if you need to change the slave device and you do
     /// not want to create a new device.
     fn set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
-        try!(ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address));
+        ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address)?;
         self.slave_address = slave_address;
         Ok(())
     }
@@ -196,8 +195,12 @@ impl I2CDevice for LinuxI2CDevice {
         ffi::i2c_smbus_read_block_data(self.as_raw_fd(), register).map_err(From::from)
     }
 
-    /// Read a block of up to 32 bytes from a device via i2c_smbus_i2c_read_block_data
-    fn smbus_read_i2c_block_data(&mut self, register: u8, len: u8) -> Result<Vec<u8>, LinuxI2CError> {
+    /// Read a block of up to 32 bytes from a device via
+    /// i2c_smbus_i2c_read_block_data
+    fn smbus_read_i2c_block_data(&mut self,
+                                 register: u8,
+                                 len: u8)
+                                 -> Result<Vec<u8>, LinuxI2CError> {
         ffi::i2c_smbus_read_i2c_block_data(self.as_raw_fd(), register, len).map_err(From::from)
     }
 
