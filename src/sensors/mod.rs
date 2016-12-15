@@ -37,8 +37,7 @@ pub trait Thermometer {
 
     /// Get a temperature from the sensor in degrees celsius
     ///
-    /// Returns Some(temperature) if available, otherwise returns
-    /// None
+    /// Returns `Ok(temperature)` if available, otherwise returns `Err(Self::Error)`
     fn temperature_celsius(&mut self) -> Result<f32, Self::Error>;
 }
 
@@ -48,8 +47,7 @@ pub trait Barometer {
 
     /// Get a pressure reading from the sensor in kPa
     ///
-    /// Returns Some(temperature) if avialable, otherwise returns
-    /// None
+    /// Returns `Ok(temperature)` if avialable, otherwise returns `Err(Self::Error)`
     fn pressure_kpa(&mut self) -> Result<f32, Self::Error>;
 }
 
