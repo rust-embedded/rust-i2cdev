@@ -52,3 +52,28 @@ pub trait Barometer {
     /// None
     fn pressure_kpa(&mut self) -> Result<f32, Self::Error>;
 }
+
+/// Trait for sensors that provide access to altitude readings
+pub trait Altimeter {
+    type Error: Error;
+
+    /// Get an altitude reading from the sensor in meters, relative to the pressure in kPa at
+    /// sea level
+    ///
+    /// Returns `Ok(altitude)` if available, otherwise returns `Err(Self::Error)`
+    fn altitude_meters(&mut self, sea_level_kpa: f32) -> Result<f32, Self::Error>;
+}
+
+impl<T> Altimeter for T
+    where T: Barometer
+{
+    type Error = <Self as Barometer>::Error;
+
+    fn altitude_meters(&mut self, sea_level_kpa: f32) -> Result<f32, Self::Error> {
+        let pressure = try!(self.pressure_kpa()) * 1000.;
+        let sea_level_pa = sea_level_kpa * 1000.;
+
+        let altitude = 44330. * (1. - (pressure / sea_level_pa).powf(0.1903));
+        Ok(altitude)
+    }
+}
