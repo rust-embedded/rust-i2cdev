@@ -8,12 +8,12 @@
 
 // Reads data from Wii Nunchuck
 
-use std::error::Error;
-use std::thread;
-use std::time::Duration;
-use std::fmt;
 
 use core::I2CDevice;
+use std::error::Error;
+use std::fmt;
+use std::thread;
+use std::time::Duration;
 
 pub const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 
@@ -83,7 +83,8 @@ pub struct Nunchuck<T: I2CDevice> {
     i2cdev: T,
 }
 
-impl<T> Nunchuck<T> where T: I2CDevice
+impl<T> Nunchuck<T>
+    where T: I2CDevice
 {
     /// Create a new Wii Nunchuck
     ///
@@ -92,7 +93,7 @@ impl<T> Nunchuck<T> where T: I2CDevice
     /// the future.
     pub fn new(i2cdev: T) -> Result<Nunchuck<T>, T::Error> {
         let mut nunchuck = Nunchuck { i2cdev: i2cdev };
-        try!(nunchuck.init());
+        nunchuck.init()?;
         Ok(nunchuck)
     }
 
@@ -106,8 +107,8 @@ impl<T> Nunchuck<T> where T: I2CDevice
         // These registers must be written; the documentation is a bit
         // lacking but it appears this is some kind of handshake to
         // perform unencrypted data tranfers
-        try!(self.i2cdev.smbus_write_byte_data(0xF0, 0x55));
-        try!(self.i2cdev.smbus_write_byte_data(0xFB, 0x00));
+        self.i2cdev.smbus_write_byte_data(0xF0, 0x55)?;
+        self.i2cdev.smbus_write_byte_data(0xFB, 0x00)?;
         Ok(())
     }
 
@@ -115,11 +116,11 @@ impl<T> Nunchuck<T> where T: I2CDevice
         let mut buf: [u8; 6] = [0; 6];
 
         // tell the nunchuck to prepare a sample
-        try!(self.i2cdev.smbus_write_byte(0x00).map_err(NunchuckError::Error));
+        self.i2cdev.smbus_write_byte(0x00).map_err(NunchuckError::Error)?;
 
         // now, read it!
         thread::sleep(Duration::from_millis(10));
-        try!(self.i2cdev.read(&mut buf).map_err(NunchuckError::Error));
+        self.i2cdev.read(&mut buf).map_err(NunchuckError::Error)?;
         NunchuckReading::from_data(&buf).ok_or(NunchuckError::ParseError)
     }
 }
@@ -127,9 +128,9 @@ impl<T> Nunchuck<T> where T: I2CDevice
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use core::I2CDevice;
     use mock::MockI2CDevice;
+    use super::*;
 
     #[test]
     fn test_intialization() {
