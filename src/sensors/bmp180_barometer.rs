@@ -24,6 +24,33 @@ pub const BMP180_CMD_PRESSURE: u8 = 0x34;
 pub const BMP180_REGISTER_PRESSURE_MSB: u8 = 0xF6;
 pub const BMP180_REGISTER_AC1MSB: u8 = 0xaa;
 
+#[derive(Copy,Clone)]
+pub enum BMP180PressureMode {
+    BMP180UltraLowPower,
+    BMP180Standard,
+    BMP180HighResolution,
+    BMP180UltraHighResolution,
+}
+
+impl BMP180PressureMode {
+    pub fn get_mode_value(self) -> u8 {
+        match self {
+            BMP180PressureMode::BMP180UltraLowPower => 0,
+            BMP180PressureMode::BMP180Standard => 1,
+            BMP180PressureMode::BMP180HighResolution => 2,
+            BMP180PressureMode::BMP180UltraHighResolution => 3,
+        }
+    }
+    pub fn mode_delay(self) -> Duration {
+        match self {
+            BMP180PressureMode::BMP180UltraLowPower => Duration::from_millis(5),
+            BMP180PressureMode::BMP180Standard => Duration::from_millis(8),
+            BMP180PressureMode::BMP180HighResolution => Duration::from_millis(14),
+            BMP180PressureMode::BMP180UltraHighResolution => Duration::from_millis(26),
+        }
+    }
+}
+#[derive(Copy,Clone)]
 pub struct BMP180CalibrationCoefficients {
     ac1: i16,
     ac2: i16,
@@ -40,20 +67,13 @@ pub struct BMP180CalibrationCoefficients {
 
 #[derive(Debug)]
 pub struct BMP180RawReading {
-    padc: u16, // 10-bit pressure ADC output value
-    tadc: u16, // 10-bit pressure ADC output value
+    padc: u32, // 10-bit pressure ADC output value
+    tadc: i16, // 10-bit pressure ADC output value
 }
-
+#[derive(Copy,Clone)]
 pub struct BMP180BarometerThermometer<T: I2CDevice + Sized> {
     pub i2cdev: T,
     pub coeff: BMP180CalibrationCoefficients,
-}
-
-
-fn calculate_b5(raw_temp: i16, ac5: i16, ac6: i16, mc: i16, md: i16) -> i32 {
-    let x1 = ((raw_temp as i32) - (ac6 as i32)) * (ac5 as i32) >> 15;
-    let x2 = (mc as i32) << 11 / (x1 + (md as i32));
-    x1 + x2
 }
 
 
@@ -72,46 +92,34 @@ impl<T> BMP180BarometerThermometer<T>
 
 impl BMP180RawReading {
     /// Create a new reading from the provided I2C Device
-    pub fn new<E: Error>(i2cdev: &mut I2CDevice<Error = E>) -> Result<BMP180RawReading, E> {
-        // tell the chip to do an ADC read so we can get updated values
-        // get temp first since it's needed for pressure calculation
+    pub fn new<E: Error>(i2cdev: &mut I2CDevice<Error = E>, mode: BMP180PressureMode) -> Result<BMP180RawReading, E> {
+        // fist we need read temp needed for further pressure calculations
         try!(i2cdev.smbus_write_byte_data(BMP180_REGISTER_CTL, BMP180_CMD_TEMP));
 
         // maximum conversion time is 5ms
         thread::sleep(Duration::from_millis(5));
 
-        // The SMBus functions read word values as little endian but that is not
-        // what we want
+        // i2c gets LittleEndian we need BigEndian
         let mut buf = [0_u8; 2];
         try!(i2cdev.write(&[BMP180_REGISTER_TEMP_MSB]));
         try!(i2cdev.read(&mut buf));
         // let padc: u16 = BigEndian::read_u16(&buf) >> 6;
-        let tadc: u16 = BigEndian::read_u16(&buf[..]);
-        unimplemented!();
-        // Ok(MPL115A2RawReading {
-        //     padc: padc,
-        //     tadc: tadc,
-        // })
+        let tadc: i16 = BigEndian::read_i16(&buf[..]);
+        // now lets get pressure
+        let offset = mode.get_mode_value();
+        let delay = mode.mode_delay();
+        try!(i2cdev.smbus_write_byte_data(BMP180_REGISTER_CTL, BMP180_CMD_PRESSURE + offset));
+        thread::sleep(delay);
+        let mut p_buf = [0_u8; 3];
+        try!(i2cdev.write(&[BMP180_REGISTER_PRESSURE_MSB]));
+        try!(i2cdev.read(&mut p_buf));
+        let padc: u32 = ((p_buf[0] as u32) << 16) + ((p_buf[1] as u32) << 8) + (p_buf[2] as u32) >> (8 - (mode as u8));
+        Ok(BMP180RawReading {
+            padc: padc,
+            tadc: tadc,
+        })
     }
 }
-
-/// Calculate the temperature in centrigrade for this reading
-// pub fn temperature_celsius(&self) -> f32 {
-//     (self.tadc as f32 - 498.0) / -5.35 + 25.0
-// }
-
-// /// Calculate the pressure in pascals for this reading
-// pub fn pressure_kpa(&self, coeff: &MPL115A2Coefficients) -> f32 {
-//     // Pcomp = a0 + (b1 + c12 * Tadc) * Padc + b2 * Tadc
-//     // Pkpa = Pcomp * ((115 - 50) / 1023) + 50
-//     let pcomp: f32 = coeff.a0 + (coeff.b1 + coeff.c12 * self.tadc as f32) * self.padc as f32 + (coeff.b2 * self.tadc as f32);
-
-//     // scale has 1023 bits of range from 50 kPa to 115 kPa
-//     let pkpa: f32 = pcomp * ((115.0 - 50.0) / 1023.0) + 50.0;
-//     pkpa
-// }
-
-
 
 
 impl BMP180CalibrationCoefficients {
@@ -121,22 +129,40 @@ impl BMP180CalibrationCoefficients {
     /// order.  This gets the raw, unconverted value of each
     /// coefficient.
     pub fn new<E: Error>(i2cdev: &mut I2CDevice<Error = E>) -> Result<BMP180CalibrationCoefficients, E> {
-        let mut buf: [u8; 11] = [0; 11];
+        let mut buf: [u8; 22] = [0; 22];
         try!(i2cdev.write(&[BMP180_REGISTER_AC1MSB]));
         try!(i2cdev.read(&mut buf));
         // unimplemented!();
         Ok(BMP180CalibrationCoefficients {
-            ac1: BigEndian::read_i16(&buf[0..0]),
-            ac2: BigEndian::read_i16(&buf[1..1]),
-            ac3: BigEndian::read_i16(&buf[2..2]),
-            ac4: BigEndian::read_u16(&buf[3..3]),
-            ac5: BigEndian::read_u16(&buf[4..4]),
-            ac6: BigEndian::read_u16(&buf[5..5]),
-            b1: BigEndian::read_i16(&buf[6..6]),
-            b2: BigEndian::read_i16(&buf[7..7]),
-            mb: BigEndian::read_i16(&buf[8..8]),
-            mc: BigEndian::read_i16(&buf[9..9]),
-            md: BigEndian::read_i16(&buf[10..10]),
+            ac1: BigEndian::read_i16(&buf[0..2]),
+            ac2: BigEndian::read_i16(&buf[2..4]),
+            ac3: BigEndian::read_i16(&buf[4..6]),
+            ac4: BigEndian::read_u16(&buf[6..8]),
+            ac5: BigEndian::read_u16(&buf[8..10]),
+            ac6: BigEndian::read_u16(&buf[10..12]),
+            b1: BigEndian::read_i16(&buf[12..14]),
+            b2: BigEndian::read_i16(&buf[14..16]),
+            mb: BigEndian::read_i16(&buf[16..18]),
+            mc: BigEndian::read_i16(&buf[18..20]),
+            md: BigEndian::read_i16(&buf[20..22]),
         })
+    }
+    fn calculate_b5(self, raw_temp: i16) -> i32 {
+        let x1 = (((raw_temp as i32) - (self.ac6 as i32)) * (self.ac5 as i32)) >> 15;
+        let x2 = ((self.mc as i32) << 11) / (x1 + (self.md as i32));
+        x1 + x2
+    }
+}
+
+impl<T> Thermometer for BMP180BarometerThermometer<T>
+    where T: I2CDevice + Sized
+{
+    type Error = T::Error;
+
+    fn temperature_celsius(&mut self) -> Result<f32, T::Error> {
+        let reading = try!(BMP180RawReading::new(&mut self.i2cdev, BMP180PressureMode::BMP180Standard));
+        let b5 = self.coeff.calculate_b5(reading.tadc);
+        let t = (b5 + 8) >> 4;
+        Ok((t as f32) / 10_f32)
     }
 }
