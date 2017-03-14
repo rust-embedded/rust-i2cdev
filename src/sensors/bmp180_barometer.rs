@@ -74,6 +74,7 @@ pub struct BMP180RawReading {
 pub struct BMP180BarometerThermometer<T: I2CDevice + Sized> {
     pub i2cdev: T,
     pub coeff: BMP180CalibrationCoefficients,
+    pub pressure_precision: BMP180PressureMode,
 }
 
 
@@ -81,11 +82,12 @@ impl<T> BMP180BarometerThermometer<T>
     where T: I2CDevice + Sized
 {
     /// Create sensor accessor for MPL115A2 on the provided i2c bus path
-    pub fn new(mut i2cdev: T) -> Result<BMP180BarometerThermometer<T>, T::Error> {
+    pub fn new(mut i2cdev: T, pressure_precision: BMP180PressureMode) -> Result<BMP180BarometerThermometer<T>, T::Error> {
         let coeff = try!(BMP180CalibrationCoefficients::new(&mut i2cdev));
         Ok(BMP180BarometerThermometer {
             i2cdev: i2cdev,
             coeff: coeff,
+            pressure_precision: pressure_precision,
         })
     }
 }
@@ -160,7 +162,7 @@ impl<T> Thermometer for BMP180BarometerThermometer<T>
     type Error = T::Error;
 
     fn temperature_celsius(&mut self) -> Result<f32, T::Error> {
-        let reading = try!(BMP180RawReading::new(&mut self.i2cdev, BMP180PressureMode::BMP180Standard));
+        let reading = try!(BMP180RawReading::new(&mut self.i2cdev, self.pressure_precision));
         let b5 = self.coeff.calculate_b5(reading.tadc);
         let t = (b5 + 8) >> 4;
         Ok((t as f32) / 10_f32)
