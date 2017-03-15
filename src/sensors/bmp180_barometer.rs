@@ -141,11 +141,6 @@ impl BMP180RawReading {
 
 
 impl BMP180CalibrationCoefficients {
-    /// Convert a slice of data values of length 8 to coefficients
-    ///
-    /// This should be built from a read of registers 0x04-0x0B in
-    /// order.  This gets the raw, unconverted value of each
-    /// coefficient.
     pub fn new<E: Error>(i2cdev: &mut I2CDevice<Error = E>) -> Result<BMP180CalibrationCoefficients, E> {
         let mut buf: [u8; 22] = [0; 22];
         try!(i2cdev.write(&[BMP180_REGISTER_AC1MSB]));
@@ -200,6 +195,7 @@ impl<T> Barometer for BMP180BarometerThermometer<T>
 fn calculate_real_pressure(padc: i32, b5: i32, coeff: BMP180CalibrationCoefficients, oss: BMP180PressureMode) -> f32 {
     // welcome to the hardware world :)
     // this code is exact formula from BMP180 datasheet page 15 (Figure 4)
+    // written in Rust
     let b6: i32 = b5 - 4000;
     let mut x1: i32 = ((coeff.b2 as i32) * ((b6 * b6) / (2 << 11))) / (2 << 10);
     let mut x2: i32 = ((coeff.ac2 as i32) * b6) >> 11;
@@ -227,20 +223,23 @@ mod tests {
     // use sensors::*;
     use mock::MockI2CDevice;
     pub const BMP180_REGISTER_PRESSURE_MSB_TEST: usize = 0x90;
-    // macro_rules! assert_almost_eq {
-    //     ($left:expr, $right:expr) => ({
-    //         match (&($left), &($right)) {
-    //             (left_val, right_val) => {
-    //                 if (*left_val - *right_val).abs() > 0.0001 {
-    //                     panic!("assertion failed: ({:?} != {:?})", *left_val, *right_val);
-    //                 }
-    //             }
-    //         }
-    //     })
-    // }
+    macro_rules! assert_almost_eq {
+        ($left:expr, $right:expr) => ({
+            match (&($left), &($right)) {
+                (left_val, right_val) => {
+                    if (*left_val - *right_val).abs() > 0.0001 {
+                        panic!("assertion failed: ({:?} != {:?})", *left_val, *right_val);
+                    }
+                }
+            }
+        })
+    }
 
-    // since this device holds pressure and temp value in the same register
+    // BMP180 device holds pressure and temp value in the same register
+    // what is stored there is depending on what will be written to BMP180_REGISTER_CTL
+    // before reading common 0xf6 register
     // testing with I2C Mockup requires some trickery :)
+    // test values are taken from BMP180 datasheet page 15 (Figure 4)
     fn make_dev(mut i2cdev: MockI2CDevice) -> BMP180BarometerThermometer<MockI2CDevice> {
         (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_TEMP_MSB as usize, &[0x6c, 0xfa]);
         (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_AC1MSB as usize,
@@ -252,34 +251,40 @@ mod tests {
 
     #[test]
     fn test_calculate_real_pressure() {
-        let mut i2cdev = MockI2CDevice::new();
-        let mut bmp180 = make_dev(i2cdev);
-        println!("test_calculate_real_pressure(): pressure_kpa: {}",
-                 bmp180.pressure_hpa().unwrap());
-        // let dev = make_dev(i2cdev);
-        // let mut buf: [u8; 2] = [0; 2];
-        // i2cdev.write(&[BMP180_REGISTER_AC1MSB]);
-        // i2cdev.read(&mut buf);
-        // (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_AC1MSB as usize, &[0xff, 0x10, 0x11]);
-        // println!("ac1: {}", BigEndian::read_i16(&buf[0..2]));
-        // let raw = BMP180RawReading {
-        //     tadc: 27898,
-        //     padc: 23843,
-        // };
+        // this hasged code  below will work when BMP180_REGISTER_PRESSURE_MSB = 0x90
+        // to bypass issue related to holding temp and pressuire in the same BMP180 register
+
+        // let mut i2cdev = MockI2CDevice::new();
+        // let mut bmp180 = make_dev(i2cdev);
+        // println!("test_calculate_real_pressure(): pressure_kpa: {}",
+        //          bmp180.pressure_hpa().unwrap());
+        // Static values from BMP180 datasheet page 15 (Figure 4
+
+        // mockup for calculate_real_pressure() code test
+        let raw = BMP180RawReading {
+            tadc: 27898,
+            padc: 23843,
+        };
+        let b5 = 2399;
         // Coefficients from BMP180 documentation for calculating scenario
-        // let test_coeff = BMP180CalibrationCoefficients {
-        //     ac1: 408,
-        //     ac2: -72,
-        //     ac3: -14383,
-        //     ac4: 32741,
-        //     ac5: 32757,
-        //     ac6: 23153,
-        //     b1: 6190,
-        //     b2: 4,
-        //     mb: -32768,
-        //     mc: -8711,
-        //     md: 2868,
-        // };
+        let test_coeff = BMP180CalibrationCoefficients {
+            ac1: 408,
+            ac2: -72,
+            ac3: -14383,
+            ac4: 32741,
+            ac5: 32757,
+            ac6: 23153,
+            b1: 6190,
+            b2: 4,
+            mb: -32768,
+            mc: -8711,
+            md: 2868,
+        };
+        let pressure = calculate_real_pressure(raw.padc,
+                                               b5,
+                                               test_coeff,
+                                               BMP180PressureMode::BMP180UltraLowPower);
+        assert_almost_eq!(pressure, 69964_f32);
     }
 
 }
