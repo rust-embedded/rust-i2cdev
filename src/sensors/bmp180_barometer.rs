@@ -70,7 +70,7 @@ pub struct BMP180CalibrationCoefficients {
 
 #[derive(Debug)]
 pub struct BMP180RawReading {
-    padc: u32, // 10-bit pressure ADC output value
+    padc: i32, // 10-bit pressure ADC output value
     tadc: i16, // 10-bit pressure ADC output value
 }
 #[derive(Copy,Clone)]
@@ -93,6 +93,18 @@ impl<T> BMP180BarometerThermometer<T>
             pressure_precision: pressure_precision,
         })
     }
+    pub fn pressure_pa(&mut self) -> Result<f32, T::Error> {
+        let reading = try!(BMP180RawReading::new(&mut self.i2cdev, self.pressure_precision));
+        let b5 = self.coeff.calculate_b5(reading.tadc);
+        let real_pressure = calculate_real_pressure(reading.padc, b5, self.coeff, self.pressure_precision);
+        Ok(real_pressure as f32)
+    }
+    pub fn pressure_hpa(&mut self) -> Result<f32, T::Error> {
+        match self.pressure_pa() {
+            Ok(x) => Ok(x / 100_f32),
+            Err(e) => Err(e),
+        }
+    }
 }
 
 impl BMP180RawReading {
@@ -110,6 +122,7 @@ impl BMP180RawReading {
         try!(i2cdev.read(&mut buf));
         // we have raw temp data in tadc.
         let tadc: i16 = BigEndian::read_i16(&buf[..]);
+        // println!("Raw Temp: {}", tadc);
         // now lets get pressure
         let offset = mode.get_mode_value();
         let delay = mode.mode_delay();
@@ -118,7 +131,7 @@ impl BMP180RawReading {
         let mut p_buf = [0_u8; 3];
         try!(i2cdev.write(&[BMP180_REGISTER_PRESSURE_MSB]));
         try!(i2cdev.read(&mut p_buf));
-        let padc: u32 = (((p_buf[0] as u32) << 16) + ((p_buf[1] as u32) << 8) + (p_buf[2] as u32)) >> (8 - (offset as u8));
+        let padc: i32 = (((p_buf[0] as i32) << 16) + ((p_buf[1] as i32) << 8) + (p_buf[2] as i32)) >> (8 - (offset as u8));
         Ok(BMP180RawReading {
             padc: padc,
             tadc: tadc,
@@ -178,43 +191,42 @@ impl<T> Barometer for BMP180BarometerThermometer<T>
     type Error = T::Error;
 
     fn pressure_kpa(&mut self) -> Result<f32, T::Error> {
-        let reading = try!(BMP180RawReading::new(&mut self.i2cdev, self.pressure_precision));
-        let b5 = self.coeff.calculate_b5(reading.tadc);
-        let real_pressure = calculate_real_pressure(reading.padc, b5, self.coeff, self.pressure_precision);
-        Ok(real_pressure)
+        match self.pressure_pa() {
+            Ok(x) => Ok(x / 1000_f32),
+            Err(e) => Err(e),
+        }
     }
 }
-fn calculate_real_pressure(padc: u32, b5: i32, coeff: BMP180CalibrationCoefficients, oss: BMP180PressureMode) -> f32 {
+fn calculate_real_pressure(padc: i32, b5: i32, coeff: BMP180CalibrationCoefficients, oss: BMP180PressureMode) -> f32 {
+    // welcome to the hardware world :)
+    // this code is exact formula from BMP180 datasheet page 15 (Figure 4)
     let b6: i32 = b5 - 4000;
-    let mut x1: i32 = ((coeff.b2 as i32) * (b6 * (b6 >> 12))) >> 11;
+    let mut x1: i32 = ((coeff.b2 as i32) * ((b6 * b6) / (2 << 11))) / (2 << 10);
     let mut x2: i32 = ((coeff.ac2 as i32) * b6) >> 11;
     let mut x3: i32 = x1 + x2;
-    // println!("Mode vale {}", self.pressure_precision.get_mode_value())
     let b3 = ((((coeff.ac1 as u32) * 4 + x3 as u32) << oss.get_mode_value()) + 2) >> 2;
     x1 = ((coeff.ac3 as i32) * b6) >> 13;
     x2 = ((coeff.b1 as i32) * ((b6 * b6) >> 12)) >> 16;
     x3 = ((x1 + x2) + 2) >> 2;
-    // here I have to check if this doens't have to be u64 When I will have reference pressure
     let b4 = ((coeff.ac4 as u32) * (x3 as u32 + 32768)) >> 15;
     let b7 = ((padc as u32 - b3 as u32) as u32) * (50000 >> oss.get_mode_value());
-    let mut p: i32 = 0;
+    let mut p: i32;
     if b7 < 0x80000000 {
-        p = ((b7 << 1) as i32) / b4 as i32;
+        p = ((b7 * 2) / b4) as i32;
     } else {
-        p = ((b7 / b4) as i32) << 1;
+        p = ((b7 / b4) * 2) as i32;
     }
     x1 = ((p >> 8) * (p >> 8)) as i32;
     x1 = (x1 * 3038) >> 16;
     x2 = (-7357_i32 * p) >> 16;
-    // return float32(p + ((x11 + x12 + 3791) >> 4)) as f32
     (p + ((x1 + x2 + 3791) >> 4) as i32) as f32
 }
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sensors::*;
+    // use sensors::*;
     use mock::MockI2CDevice;
-
+    pub const BMP180_REGISTER_PRESSURE_MSB_TEST: usize = 0x90;
     // macro_rules! assert_almost_eq {
     //     ($left:expr, $right:expr) => ({
     //         match (&($left), &($right)) {
@@ -227,26 +239,47 @@ mod tests {
     //     })
     // }
 
+    // since this device holds pressure and temp value in the same register
+    // testing with I2C Mockup requires some trickery :)
+    fn make_dev(mut i2cdev: MockI2CDevice) -> BMP180BarometerThermometer<MockI2CDevice> {
+        (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_TEMP_MSB as usize, &[0x6c, 0xfa]);
+        (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_AC1MSB as usize,
+                                        &[0x1, 0x98 /* ac1 */, 0xff, 0xb8 /* ac2 */, 0xc7, 0xd1 /* ac3 */, 0x7f, 0xe5 /* ac4 */, 0x7f, 0xf5 /* ac5 */, 0x5a, 0x71 /* ac6 */, 0x18, 0x2e /* b1 */, 0x0,
+                                          0x04 /* b2 */, 0x80, 0x0 /* mb */, 0xdd, 0xf9 /* mc */, 0xb, 0x34 /* md */]); // C12
+        (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_PRESSURE_MSB_TEST, &[0x5d, 0x23, 0x0]);
+        BMP180BarometerThermometer::new(i2cdev, BMP180PressureMode::BMP180UltraLowPower).unwrap()
+    }
+
     #[test]
     fn test_calculate_real_pressure() {
-        let raw = BMP180RawReading {
-            tadc: 27898,
-            padc: 23843,
-        };
+        let mut i2cdev = MockI2CDevice::new();
+        let mut bmp180 = make_dev(i2cdev);
+        println!("test_calculate_real_pressure(): pressure_kpa: {}",
+                 bmp180.pressure_hpa().unwrap());
+        // let dev = make_dev(i2cdev);
+        // let mut buf: [u8; 2] = [0; 2];
+        // i2cdev.write(&[BMP180_REGISTER_AC1MSB]);
+        // i2cdev.read(&mut buf);
+        // (&mut i2cdev.regmap).write_regs(BMP180_REGISTER_AC1MSB as usize, &[0xff, 0x10, 0x11]);
+        // println!("ac1: {}", BigEndian::read_i16(&buf[0..2]));
+        // let raw = BMP180RawReading {
+        //     tadc: 27898,
+        //     padc: 23843,
+        // };
         // Coefficients from BMP180 documentation for calculating scenario
-        let test_coeff = BMP180CalibrationCoefficients {
-            ac1: 408,
-            ac2: -72,
-            ac3: -14383,
-            ac4: 32741,
-            ac5: 32757,
-            ac6: 23153,
-            b1: 6190,
-            b2: 4,
-            mb: -32768,
-            mc: -8711,
-            md: 2868,
-        };
+        // let test_coeff = BMP180CalibrationCoefficients {
+        //     ac1: 408,
+        //     ac2: -72,
+        //     ac3: -14383,
+        //     ac4: 32741,
+        //     ac5: 32757,
+        //     ac6: 23153,
+        //     b1: 6190,
+        //     b2: 4,
+        //     mb: -32768,
+        //     mc: -8711,
+        //     md: 2868,
+        // };
     }
 
 }
