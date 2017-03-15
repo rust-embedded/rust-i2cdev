@@ -103,22 +103,22 @@ impl BMP180RawReading {
 
         // maximum conversion time is 5ms
         thread::sleep(Duration::from_millis(5));
-
+        // Read uncompensated temperature (two registers)
         // i2c gets LittleEndian we need BigEndian
         let mut buf = [0_u8; 2];
         try!(i2cdev.write(&[BMP180_REGISTER_TEMP_MSB]));
         try!(i2cdev.read(&mut buf));
-        // let padc: u16 = BigEndian::read_u16(&buf) >> 6;
+        // we have raw temp data in tadc.
         let tadc: i16 = BigEndian::read_i16(&buf[..]);
         // now lets get pressure
         let offset = mode.get_mode_value();
         let delay = mode.mode_delay();
-        try!(i2cdev.smbus_write_byte_data(BMP180_REGISTER_CTL, BMP180_CMD_PRESSURE + offset));
+        try!(i2cdev.smbus_write_byte_data(BMP180_REGISTER_CTL, BMP180_CMD_PRESSURE + (offset << 6)));
         thread::sleep(delay);
         let mut p_buf = [0_u8; 3];
         try!(i2cdev.write(&[BMP180_REGISTER_PRESSURE_MSB]));
         try!(i2cdev.read(&mut p_buf));
-        let padc: u32 = ((p_buf[0] as u32) << 16) + ((p_buf[1] as u32) << 8) + (p_buf[2] as u32) >> (8 - (mode as u8));
+        let padc: u32 = (((p_buf[0] as u32) << 16) + ((p_buf[1] as u32) << 8) + (p_buf[2] as u32)) >> (8 - (offset as u8));
         Ok(BMP180RawReading {
             padc: padc,
             tadc: tadc,
@@ -170,4 +170,83 @@ impl<T> Thermometer for BMP180BarometerThermometer<T>
         let t = (b5 + 8) >> 4;
         Ok((t as f32) / 10_f32)
     }
+}
+
+impl<T> Barometer for BMP180BarometerThermometer<T>
+    where T: I2CDevice + Sized
+{
+    type Error = T::Error;
+
+    fn pressure_kpa(&mut self) -> Result<f32, T::Error> {
+        let reading = try!(BMP180RawReading::new(&mut self.i2cdev, self.pressure_precision));
+        let b5 = self.coeff.calculate_b5(reading.tadc);
+        let real_pressure = calculate_real_pressure(reading.padc, b5, self.coeff, self.pressure_precision);
+        Ok(real_pressure)
+    }
+}
+fn calculate_real_pressure(padc: u32, b5: i32, coeff: BMP180CalibrationCoefficients, oss: BMP180PressureMode) -> f32 {
+    let b6: i32 = b5 - 4000;
+    let mut x1: i32 = ((coeff.b2 as i32) * (b6 * (b6 >> 12))) >> 11;
+    let mut x2: i32 = ((coeff.ac2 as i32) * b6) >> 11;
+    let mut x3: i32 = x1 + x2;
+    // println!("Mode vale {}", self.pressure_precision.get_mode_value())
+    let b3 = ((((coeff.ac1 as u32) * 4 + x3 as u32) << oss.get_mode_value()) + 2) >> 2;
+    x1 = ((coeff.ac3 as i32) * b6) >> 13;
+    x2 = ((coeff.b1 as i32) * ((b6 * b6) >> 12)) >> 16;
+    x3 = ((x1 + x2) + 2) >> 2;
+    // here I have to check if this doens't have to be u64 When I will have reference pressure
+    let b4 = ((coeff.ac4 as u32) * (x3 as u32 + 32768)) >> 15;
+    let b7 = ((padc as u32 - b3 as u32) as u32) * (50000 >> oss.get_mode_value());
+    let mut p: i32 = 0;
+    if b7 < 0x80000000 {
+        p = ((b7 << 1) as i32) / b4 as i32;
+    } else {
+        p = ((b7 / b4) as i32) << 1;
+    }
+    x1 = ((p >> 8) * (p >> 8)) as i32;
+    x1 = (x1 * 3038) >> 16;
+    x2 = (-7357_i32 * p) >> 16;
+    // return float32(p + ((x11 + x12 + 3791) >> 4)) as f32
+    (p + ((x1 + x2 + 3791) >> 4) as i32) as f32
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sensors::*;
+    use mock::MockI2CDevice;
+
+    // macro_rules! assert_almost_eq {
+    //     ($left:expr, $right:expr) => ({
+    //         match (&($left), &($right)) {
+    //             (left_val, right_val) => {
+    //                 if (*left_val - *right_val).abs() > 0.0001 {
+    //                     panic!("assertion failed: ({:?} != {:?})", *left_val, *right_val);
+    //                 }
+    //             }
+    //         }
+    //     })
+    // }
+
+    #[test]
+    fn test_calculate_real_pressure() {
+        let raw = BMP180RawReading {
+            tadc: 27898,
+            padc: 23843,
+        };
+        // Coefficients from BMP180 documentation for calculating scenario
+        let test_coeff = BMP180CalibrationCoefficients {
+            ac1: 408,
+            ac2: -72,
+            ac3: -14383,
+            ac4: 32741,
+            ac5: 32757,
+            ac6: 23153,
+            b1: 6190,
+            b2: 4,
+            mb: -32768,
+            mc: -8711,
+            md: 2868,
+        };
+    }
+
 }
