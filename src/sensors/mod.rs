@@ -23,12 +23,30 @@ pub struct AccelerometerSample {
     pub z: f32,
 }
 
+#[derive(Debug)]
+pub struct GyroscopeSample {
+    /// x-axis G's
+    pub x: f32,
+    /// y-axis G's
+    pub y: f32,
+    /// z-axis G's
+    pub z: f32,
+}
+
 /// Trait for sensors that provide access to accelerometer readings (3-axis)
 pub trait Accelerometer {
     type Error: Error;
 
     /// Grab an accelerometer sample from the device
     fn accelerometer_sample(&mut self) -> Result<AccelerometerSample, Self::Error>;
+}
+
+/// Trait for sensors that provide access to accelerometer readings (3-axis)
+pub trait Gyroscope {
+    type Error: Error;
+
+    /// Grab a gyroscope sample from the device.
+    fn gyro_sample(&mut self) -> Result<GyroscopeSample, Self::Error>;
 }
 
 /// Trait for sensors that provide access to temperature readings
