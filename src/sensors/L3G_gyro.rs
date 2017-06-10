@@ -1,3 +1,8 @@
+/// Drivers for L3G gyros.
+/// This was tested with:
+///   - L3GD20 on the XINY GY-89 10DOF LSM303D + L3GD20 + BMP180
+///
+/// Author: Thomas Deegan <tdeegan@gmail.com>
 extern crate i2cdev;
 extern crate time;
 
