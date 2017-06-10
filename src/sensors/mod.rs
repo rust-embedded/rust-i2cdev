@@ -11,6 +11,7 @@ use std::error::Error;
 pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 pub mod nunchuck;
+pub mod L3G_gyro;
 // pub mod bno055_orientation;
 
 #[derive(Debug)]
@@ -46,7 +47,7 @@ pub trait Gyroscope {
     type Error: Error;
 
     /// Grab a gyroscope sample from the device.
-    fn gyro_sample(&mut self) -> Result<GyroscopeSample, Self::Error>;
+    fn gyroscope_sample(&mut self) -> Result<GyroscopeSample, Self::Error>;
 }
 
 /// Trait for sensors that provide access to temperature readings
