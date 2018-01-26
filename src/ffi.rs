@@ -171,12 +171,18 @@ struct i2c_rdwr_ioctl_data {
     nmsgs: u32,
 }
 
-ioctl!(bad write_int ioctl_set_i2c_slave_address with I2C_SLAVE);
-ioctl!(bad write_ptr ioctl_i2c_smbus with I2C_SMBUS; i2c_smbus_ioctl_data);
+mod ioctl {
+    use super::{I2C_SLAVE, I2C_SMBUS};
+    pub use super::i2c_smbus_ioctl_data;
+
+    ioctl!(bad write_int set_i2c_slave_address with I2C_SLAVE);
+    ioctl!(bad write_ptr i2c_smbus with I2C_SMBUS; i2c_smbus_ioctl_data);
+}
+
 
 pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
     try!(unsafe {
-        ioctl_set_i2c_slave_address(fd, slave_address as i32)
+        ioctl::set_i2c_slave_address(fd, slave_address as i32)
     });
     Ok(())
 }
@@ -195,7 +201,7 @@ unsafe fn i2c_smbus_access(fd: RawFd,
     };
 
     // remove type information
-    ioctl_i2c_smbus(fd, &mut args).map(drop)
+    ioctl::i2c_smbus(fd, &mut args).map(drop)
 }
 
 #[inline]
