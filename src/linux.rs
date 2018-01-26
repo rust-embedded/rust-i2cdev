@@ -48,7 +48,7 @@ impl From<LinuxI2CError> for io::Error {
             LinuxI2CError::Nix(e) => {
                 match e {
                     nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
-                    nix::Error::InvalidPath => {
+                    e => {
                         io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e))
                     }
                 }

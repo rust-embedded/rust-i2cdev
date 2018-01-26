@@ -19,23 +19,23 @@ use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 pub type I2CError = nix::Error;
 
 bitflags! {
-    flags I2CMsgFlags: u16 {
+    struct I2CMsgFlags: u16 {
         /// this is a ten bit chip address
-        const I2C_M_TEN = 0x0010,
+        const I2C_M_TEN = 0x0010;
         /// read data, from slave to master
-        const I2C_M_RD = 0x0001,
+        const I2C_M_RD = 0x0001;
         /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_STOP = 0x8000,
+        const I2C_M_STOP = 0x8000;
         /// if I2C_FUNC_NOSTART
-        const I2C_M_NOSTART = 0x4000,
+        const I2C_M_NOSTART = 0x4000;
         /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_REV_DIR_ADDR = 0x2000,
+        const I2C_M_REV_DIR_ADDR = 0x2000;
         /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_IGNORE_NAK = 0x1000,
+        const I2C_M_IGNORE_NAK = 0x1000;
         /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_NO_RD_ACK = 0x0800,
+        const I2C_M_NO_RD_ACK = 0x0800;
         /// length will be first received byte
-        const I2C_M_RECV_LEN = 0x0400,
+        const I2C_M_RECV_LEN = 0x0400;
     }
 }
 
@@ -52,44 +52,44 @@ struct i2c_msg {
 }
 
 bitflags! {
-    flags I2CFunctions: u32 {
-        const I2C_FUNC_I2C = 0x00000001,
-        const I2C_FUNC_10BIT_ADDR = 0x00000002,
-        const I2C_FUNC_PROTOCOL_MANGLING = 0x00000004, /* I2C_M_IGNORE_NAK etc. */
-        const I2C_FUNC_SMBUS_PEC = 0x00000008,
-        const I2C_FUNC_NOSTART = 0x00000010, /* I2C_M_NOSTART */
-        const I2C_FUNC_SMBUS_BLOCK_PROC_CALL = 0x00008000, /* SMBus 2.0 */
-        const I2C_FUNC_SMBUS_QUICK = 0x00010000,
-        const I2C_FUNC_SMBUS_READ_BYTE = 0x00020000,
-        const I2C_FUNC_SMBUS_WRITE_BYTE = 0x00040000,
-        const I2C_FUNC_SMBUS_READ_BYTE_DATA = 0x00080000,
-        const I2C_FUNC_SMBUS_WRITE_BYTE_DATA = 0x00100000,
-        const I2C_FUNC_SMBUS_READ_WORD_DATA = 0x00200000,
-        const I2C_FUNC_SMBUS_WRITE_WORD_DATA = 0x00400000,
-        const I2C_FUNC_SMBUS_PROC_CALL = 0x00800000,
-        const I2C_FUNC_SMBUS_READ_BLOCK_DATA = 0x01000000,
-        const I2C_FUNC_SMBUS_WRITE_BLOCK_DATA  = 0x02000000,
-        const I2C_FUNC_SMBUS_READ_I2C_BLOCK = 0x04000000, /* I2C-like block xfer  */
-        const I2C_FUNC_SMBUS_WRITE_I2C_BLOCK = 0x08000000, /* w/ 1-byte reg. addr. */
+    struct I2CFunctions: u32 {
+        const I2C_FUNC_I2C = 0x00000001;
+        const I2C_FUNC_10BIT_ADDR = 0x00000002;
+        const I2C_FUNC_PROTOCOL_MANGLING = 0x00000004; /* I2C_M_IGNORE_NAK etc. */
+        const I2C_FUNC_SMBUS_PEC = 0x00000008;
+        const I2C_FUNC_NOSTART = 0x00000010; /* I2C_M_NOSTART */
+        const I2C_FUNC_SMBUS_BLOCK_PROC_CALL = 0x00008000; /* SMBus 2.0 */
+        const I2C_FUNC_SMBUS_QUICK = 0x00010000;
+        const I2C_FUNC_SMBUS_READ_BYTE = 0x00020000;
+        const I2C_FUNC_SMBUS_WRITE_BYTE = 0x00040000;
+        const I2C_FUNC_SMBUS_READ_BYTE_DATA = 0x00080000;
+        const I2C_FUNC_SMBUS_WRITE_BYTE_DATA = 0x00100000;
+        const I2C_FUNC_SMBUS_READ_WORD_DATA = 0x00200000;
+        const I2C_FUNC_SMBUS_WRITE_WORD_DATA = 0x00400000;
+        const I2C_FUNC_SMBUS_PROC_CALL = 0x00800000;
+        const I2C_FUNC_SMBUS_READ_BLOCK_DATA = 0x01000000;
+        const I2C_FUNC_SMBUS_WRITE_BLOCK_DATA  = 0x02000000;
+        const I2C_FUNC_SMBUS_READ_I2C_BLOCK = 0x04000000; /* I2C-like block xfer  */
+        const I2C_FUNC_SMBUS_WRITE_I2C_BLOCK = 0x08000000; /* w/ 1-byte reg. addr. */
 
-        const I2C_FUNC_SMBUS_BYTE = (I2C_FUNC_SMBUS_READ_BYTE.bits |
-                                     I2C_FUNC_SMBUS_WRITE_BYTE.bits),
-        const I2C_FUNC_SMBUS_BYTE_DATA = (I2C_FUNC_SMBUS_READ_BYTE_DATA.bits |
-                                          I2C_FUNC_SMBUS_WRITE_BYTE_DATA.bits),
-        const I2C_FUNC_SMBUS_WORD_DATA = (I2C_FUNC_SMBUS_READ_WORD_DATA.bits |
-                                          I2C_FUNC_SMBUS_WRITE_WORD_DATA.bits),
-        const I2C_FUNC_SMBUS_BLOCK_DATA = (I2C_FUNC_SMBUS_READ_BLOCK_DATA.bits |
-                                           I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits),
-        const I2C_FUNC_SMBUS_I2C_BLOCK = (I2C_FUNC_SMBUS_READ_I2C_BLOCK.bits |
-                                          I2C_FUNC_SMBUS_WRITE_I2C_BLOCK.bits),
-        const I2C_FUNC_SMBUS_EMUL = (I2C_FUNC_SMBUS_QUICK.bits |
-                                     I2C_FUNC_SMBUS_BYTE.bits |
-                                     I2C_FUNC_SMBUS_BYTE_DATA.bits |
-                                     I2C_FUNC_SMBUS_WORD_DATA.bits |
-                                     I2C_FUNC_SMBUS_PROC_CALL.bits |
-                                     I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits |
-                                     I2C_FUNC_SMBUS_I2C_BLOCK.bits |
-                                     I2C_FUNC_SMBUS_PEC.bits),
+        const I2C_FUNC_SMBUS_BYTE = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE.bits);
+        const I2C_FUNC_SMBUS_BYTE_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE_DATA.bits |
+                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE_DATA.bits);
+        const I2C_FUNC_SMBUS_WORD_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_WORD_DATA.bits |
+                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_WORD_DATA.bits);
+        const I2C_FUNC_SMBUS_BLOCK_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_BLOCK_DATA.bits |
+                                           I2CFunctions::I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits);
+        const I2C_FUNC_SMBUS_I2C_BLOCK = (I2CFunctions::I2C_FUNC_SMBUS_READ_I2C_BLOCK.bits |
+                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_I2C_BLOCK.bits);
+        const I2C_FUNC_SMBUS_EMUL = (I2CFunctions::I2C_FUNC_SMBUS_QUICK.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_BYTE.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_BYTE_DATA.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_WORD_DATA.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_PROC_CALL.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_I2C_BLOCK.bits |
+                                     I2CFunctions::I2C_FUNC_SMBUS_PEC.bits);
     }
 }
 
@@ -151,7 +151,7 @@ const I2C_RDRW_IOCTL_MAX_MSGS: u8 = 42;
 
 /// This is the structure as used in the I2C_SMBUS ioctl call
 #[repr(C)]
-struct i2c_smbus_ioctl_data {
+pub struct i2c_smbus_ioctl_data {
     // __u8 read_write;
     read_write: u8,
     // __u8 command;
@@ -171,15 +171,12 @@ struct i2c_rdwr_ioctl_data {
     nmsgs: u32,
 }
 
-ioctl!(bad ioctl_set_i2c_slave_address with I2C_SLAVE);
-ioctl!(bad ioctl_i2c_smbus with I2C_SMBUS);
+ioctl!(bad write_int ioctl_set_i2c_slave_address with I2C_SLAVE);
+ioctl!(bad write_ptr ioctl_i2c_smbus with I2C_SMBUS; i2c_smbus_ioctl_data);
 
 pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
     try!(unsafe {
-        // NOTE: the generated ioctl call expected as pointer to a u8 but
-        // we just want to provide the u8 directly, so we just cast to a pointer.
-        // This is correct behavior.
-        ioctl_set_i2c_slave_address(fd, slave_address as *mut u8)
+        ioctl_set_i2c_slave_address(fd, slave_address as i32)
     });
     Ok(())
 }
@@ -198,8 +195,7 @@ unsafe fn i2c_smbus_access(fd: RawFd,
     };
 
     // remove type information
-    let p_args: *mut u8 = mem::transmute(&mut args);
-    ioctl_i2c_smbus(fd, p_args).map(drop)
+    ioctl_i2c_smbus(fd, &mut args).map(drop)
 }
 
 #[inline]
