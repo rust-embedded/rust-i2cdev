@@ -5,7 +5,7 @@ Rust I2cdev
 [![Version](https://img.shields.io/crates/v/i2cdev.svg)](https://crates.io/crates/i2cdev)
 [![License](https://img.shields.io/crates/l/i2cdev.svg)](https://github.com/rust-embedded/rust-i2cdev/blob/master/README.md#license)
 
-[Documentation](https://rust-embedded.github.io/rust-i2cdev)
+[Documentation](https://docs.rs/i2cdev)
 
 The Rust `i2cdev` crate seeks to provide full access to the Linux i2cdev
 driver interface in Rust without the need to wrap any C code or directly make
@@ -26,7 +26,7 @@ functions (read/write) which are done via the Read/Write traits (if
 you actually want to use the Wii Nunchuck you should use
 [`i2cdev::sensors::nunchuck::Nunchuck`][nunchuck]:
 
-```rust,no_run
+```rust,no_run,skeptic-template
 extern crate i2cdev;
 
 use std::thread;
