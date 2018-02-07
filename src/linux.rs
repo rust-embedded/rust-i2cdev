@@ -116,7 +116,7 @@ impl LinuxI2CDevice {
     /// (it is done internally).  Calling this method is only
     /// necessary if you need to change the slave device and you do
     /// not want to create a new device.
-    fn set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
+    pub fn set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
         try!(ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address));
         self.slave_address = slave_address;
         Ok(())
