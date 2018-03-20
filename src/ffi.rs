@@ -407,8 +407,8 @@ pub fn i2c_smbus_write_i2c_block_data(fd: RawFd,
 #[inline]
 pub fn i2c_smbus_process_call_block(fd: RawFd, register: u8, values: &[u8]) -> Result<Vec<u8>, I2CError> {
     let mut data = i2c_smbus_data::empty();
-    let len: usize = if values.len() > 32 {
-        32
+    let len: usize = if values.len() > 31 {
+        31
     } else {
         values.len()
     };
