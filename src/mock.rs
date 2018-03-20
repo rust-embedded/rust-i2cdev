@@ -88,11 +88,15 @@ impl I2CDevice for MockI2CDevice {
         unimplemented!()
     }
 
-    fn smbus_process_block(&mut self, _register: u8, _values: &[u8]) -> I2CResult<()> {
+    fn smbus_process_block(&mut self, _register: u8, _values: &[u8]) -> I2CResult<Vec<u8>> {
         unimplemented!()
     }
 
     fn smbus_read_i2c_block_data(&mut self, _register: u8, _len: u8) -> I2CResult<Vec<u8>> {
+        unimplemented!()
+    }
+
+    fn smbus_write_i2c_block_data(&mut self, _register: u8, _values: &[u8]) -> I2CResult<()> {
         unimplemented!()
     }
 }
