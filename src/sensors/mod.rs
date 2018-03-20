@@ -11,10 +11,21 @@ use std::error::Error;
 pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
 pub mod nunchuck;
+pub mod L3G_gyro;
 // pub mod bno055_orientation;
 
 #[derive(Debug)]
 pub struct AccelerometerSample {
+    /// x-axis G's
+    pub x: f32,
+    /// y-axis G's
+    pub y: f32,
+    /// z-axis G's
+    pub z: f32,
+}
+
+#[derive(Debug)]
+pub struct GyroscopeSample {
     /// x-axis G's
     pub x: f32,
     /// y-axis G's
@@ -29,6 +40,14 @@ pub trait Accelerometer {
 
     /// Grab an accelerometer sample from the device
     fn accelerometer_sample(&mut self) -> Result<AccelerometerSample, Self::Error>;
+}
+
+/// Trait for sensors that provide access to accelerometer readings (3-axis)
+pub trait Gyroscope {
+    type Error: Error;
+
+    /// Grab a gyroscope sample from the device.
+    fn gyroscope_sample(&mut self) -> Result<GyroscopeSample, Self::Error>;
 }
 
 /// Trait for sensors that provide access to temperature readings
