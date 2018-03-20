@@ -10,6 +10,7 @@ use std::error::Error;
 
 pub mod adxl345_accelerometer;
 pub mod mpl115a2_barometer;
+pub mod bmp180_barometer;
 pub mod nunchuck;
 // pub mod bno055_orientation;
 
