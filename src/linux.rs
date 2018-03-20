@@ -210,9 +210,14 @@ impl I2CDevice for LinuxI2CDevice {
         ffi::i2c_smbus_write_block_data(self.as_raw_fd(), register, values).map_err(From::from)
     }
 
+    /// Write a block of up to 32 bytes from a device via i2c_smbus_i2c_write_block_data
+    fn smbus_write_i2c_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), LinuxI2CError> {
+        ffi::i2c_smbus_write_i2c_block_data(self.as_raw_fd(), register, values).map_err(From::from)
+    }
+
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.
-    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<(), LinuxI2CError> {
-        ffi::i2c_smbus_write_i2c_block_data(self.as_raw_fd(), register, values).map_err(From::from)
+    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, LinuxI2CError> {
+        ffi::i2c_smbus_process_call_block(self.as_raw_fd(), register, values).map_err(From::from)
     }
 }

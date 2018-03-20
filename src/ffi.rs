@@ -403,3 +403,29 @@ pub fn i2c_smbus_write_i2c_block_data(fd: RawFd,
     });
     Ok(())
 }
+
+#[inline]
+pub fn i2c_smbus_process_call_block(fd: RawFd, register: u8, values: &[u8]) -> Result<Vec<u8>, I2CError> {
+    let mut data = i2c_smbus_data::empty();
+    let len: usize = if values.len() > 31 {
+        31
+    } else {
+        values.len()
+    };
+    data.block[0] = len as u8;
+    for i in 1..(len + 1) {
+        data.block[i] = values[i - 1];
+    }
+    try!(unsafe {
+        i2c_smbus_access(fd,
+                         I2CSMBusReadWrite::I2C_SMBUS_WRITE,
+                         register,
+                         I2CSMBusSize::I2C_SMBUS_BLOCK_PROC_CALL,
+                         &mut data)
+    });
+
+    // create a vector from the data in the block starting at byte
+    // 1 and ending after count bytes after that
+    let count = data.block[0];
+    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+}
