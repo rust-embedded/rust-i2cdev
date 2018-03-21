@@ -13,6 +13,13 @@ low-level system calls.  The documentation for the i2cdev interace can
 be found at https://www.kernel.org/doc/Documentation/i2c/dev-interface and
 in the [lm-sensors projects](http://www.lm-sensors.org/).
 
+Device driver developers should consider building on top of the
+[embedded-hal](https://crates.io/crates/embedded-hal) traits rather than
+directly coupling to this library. An implementation of those generic traits for
+Linux can be found in
+[linux-embedded-hal](https://crates.io/crates/linux-embedded-hal) which, at
+present, uses this crate as the backend for I2C.
+
 Example/API
 -----------
 
@@ -21,10 +28,7 @@ Nunchuck (which has an i2c interface).
 [Go View the Example](https://github.com/rust-embedded/rust-i2cdev/blob/master/examples/nunchuck.rs).
 
 Here's a real quick example showing the guts of how you create
-device and start talking to it...  This device only requires basic
-functions (read/write) which are done via the Read/Write traits (if
-you actually want to use the Wii Nunchuck you should use
-[`i2cdev::sensors::nunchuck::Nunchuck`][nunchuck]:
+device and start talking to it... 
 
 ```rust,no_run,skeptic-template
 extern crate i2cdev;
@@ -58,8 +62,6 @@ fn i2cfun() -> Result<(), LinuxI2CError> {
 
 In addition to the Read/Write traits, the following methods are
 available via the [I2CDevice trait](https://rust-embedded.github.io/rust-i2cdev/i2cdev/core/trait.I2CDevice.html).
-
-[nunchuck]: http://rust-embedded.github.io/rust-i2cdev/i2cdev/sensors/nunchuck/struct.Nunchuck.html
 
 Features
 --------
