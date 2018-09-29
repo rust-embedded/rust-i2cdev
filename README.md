@@ -43,11 +43,11 @@ const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 
 // real code should probably not use unwrap()
 fn i2cfun() -> Result<(), LinuxI2CError> {
-    let mut dev = try!(LinuxI2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR));
+    let mut dev = LinuxI2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR)?;
 
     // init sequence
-    try!(dev.smbus_write_byte_data(0xF0, 0x55));
-    try!(dev.smbus_write_byte_data(0xFB, 0x00));
+    dev.smbus_write_byte_data(0xF0, 0x55)?;
+    dev.smbus_write_byte_data(0xFB, 0x00)?;
     thread::sleep(Duration::from_millis(100));
 
     loop {

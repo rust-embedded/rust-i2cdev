@@ -33,7 +33,7 @@ pub trait I2CDevice {
     /// the previous SMBus command.
     fn smbus_read_byte(&mut self) -> Result<u8, Self::Error> {
         let mut buf = [0_u8];
-        try!(self.read(&mut buf));
+        self.read(&mut buf)?;
         Ok(buf[0])
     }
 
@@ -49,7 +49,7 @@ pub trait I2CDevice {
     ///
     /// The register is specified through the Comm byte.
     fn smbus_read_byte_data(&mut self, register: u8) -> Result<u8, Self::Error> {
-        try!(self.smbus_write_byte(register));
+        self.smbus_write_byte(register)?;
         self.smbus_read_byte()
     }
 
@@ -63,8 +63,8 @@ pub trait I2CDevice {
     /// Read 2 bytes from a given register on a device (lsb first)
     fn smbus_read_word_data(&mut self, register: u8) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0x00; 2];
-        try!(self.smbus_write_byte(register));
-        try!(self.read(&mut buf));
+        self.smbus_write_byte(register)?;
+        self.read(&mut buf)?;
         Ok(LittleEndian::read_u16(&buf))
     }
 
@@ -78,8 +78,8 @@ pub trait I2CDevice {
     /// Select a register, send 16 bits of data to it, and read 16 bits of data
     fn smbus_process_word(&mut self, register: u8, value: u16) -> Result<u16, Self::Error> {
         let mut buf: [u8; 2] = [0x00; 2];
-        try!(self.smbus_write_word_data(register, value));
-        try!(self.read(&mut buf));
+        self.smbus_write_word_data(register, value)?;
+        self.read(&mut buf)?;
         Ok(LittleEndian::read_u16(&buf))
     }
 

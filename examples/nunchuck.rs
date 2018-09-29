@@ -107,7 +107,7 @@ mod nunchuck {
         /// the future.
         pub fn new(i2cdev: T) -> Result<Nunchuck<T>, T::Error> {
             let mut nunchuck = Nunchuck { i2cdev: i2cdev };
-            try!(nunchuck.init());
+            nunchuck.init()?;
             Ok(nunchuck)
         }
 
@@ -121,8 +121,8 @@ mod nunchuck {
             // These registers must be written; the documentation is a bit
             // lacking but it appears this is some kind of handshake to
             // perform unencrypted data tranfers
-            try!(self.i2cdev.smbus_write_byte_data(0xF0, 0x55));
-            try!(self.i2cdev.smbus_write_byte_data(0xFB, 0x00));
+            self.i2cdev.smbus_write_byte_data(0xF0, 0x55)?;
+            self.i2cdev.smbus_write_byte_data(0xFB, 0x00)?;
             Ok(())
         }
 
@@ -138,7 +138,7 @@ mod nunchuck {
 
             // now, read it!
             thread::sleep(Duration::from_millis(10));
-            try!(self.i2cdev.read(&mut buf).map_err(NunchuckError::Error));
+            self.i2cdev.read(&mut buf).map_err(NunchuckError::Error)?;
             NunchuckReading::from_data(&buf).ok_or(NunchuckError::ParseError)
         }
     }
