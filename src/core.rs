@@ -110,4 +110,20 @@ pub trait I2CDevice {
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, Self::Error>;
+    
+    /// Send a batch of messages. Useful for when multiple buffers need to be
+    /// sent or recieved without an I2C `stop` flag.
+    fn transfer<M: I2CMessage>(&self, messages: &[M]) -> Result<(), Self::Error>;
+}
+
+/// Messages sent to / from an I2C device as a batch
+pub trait I2CMessage {
+    /// Represents a read operation
+    fn read(data: &[u8]) -> Self;
+
+    /// Represents a write operation
+    fn write(&self, data: &[u8]) -> Self;
+
+    /// Represents a custom operation or special opperands
+    fn custom(&self, data: &[u8], address: u16, flags: u16) -> Self;
 }

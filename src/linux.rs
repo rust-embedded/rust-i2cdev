@@ -7,7 +7,10 @@
 // except according to those terms.
 
 use ffi;
-use core::I2CDevice;
+use core::{
+    I2CDevice,
+    I2CMessage
+};
 use std::error::Error;
 use std::path::Path;
 use std::fs::File;
@@ -219,5 +222,25 @@ impl I2CDevice for LinuxI2CDevice {
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, LinuxI2CError> {
         ffi::i2c_smbus_process_call_block(self.as_raw_fd(), register, values).map_err(From::from)
+    }
+
+    fn transfer<LinuxMessage>(&self, messages: &[LinuxMessage]) -> Result<(), Self::Error> {
+        unimplemented!()
+    }
+}
+
+struct LinuxMessage;
+
+impl I2CMessage for LinuxMessage {
+    fn read(data: &[u8]) -> Self {
+        unimplemented!();
+    }
+
+    fn write(&self, data: &[u8]) -> Self {
+        unimplemented!();
+    }
+
+    fn custom(&self, data: &[u8], address: u16, flags: u16) -> Self {
+        unimplemented!();
     }
 }

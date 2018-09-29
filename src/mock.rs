@@ -5,7 +5,10 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
-use core::I2CDevice;
+use core::{
+    I2CDevice,
+    I2CMessage,
+};
 use std::io;
 
 pub type I2CResult<T> = io::Result<T>;
@@ -54,6 +57,22 @@ impl I2CRegisterMap {
     }
 }
 
+struct MockMessage;
+
+impl I2CMessage for MockMessage {
+    fn read(data: &[u8]) -> Self {
+        unimplemented!();
+    }
+
+    fn write(&self, data: &[u8]) -> Self {
+        unimplemented!();
+    }
+
+    fn custom(&self, data: &[u8], address: u16, flags: u16) -> Self {
+        unimplemented!();
+    }
+}
+
 pub struct MockI2CDevice {
     pub regmap: I2CRegisterMap,
 }
@@ -97,6 +116,10 @@ impl I2CDevice for MockI2CDevice {
     }
 
     fn smbus_write_i2c_block_data(&mut self, _register: u8, _values: &[u8]) -> I2CResult<()> {
+        unimplemented!()
+    }
+
+    fn transfer<MockMessage>(&self, messages: &[MockMessage]) -> Result<(), Self::Error> {
         unimplemented!()
     }
 }
