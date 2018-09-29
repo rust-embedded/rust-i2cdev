@@ -91,7 +91,7 @@ mod sensors {
         type Error = <Self as Barometer>::Error;
 
         fn altitude_meters(&mut self, sea_level_kpa: f32) -> Result<f32, Self::Error> {
-            let pressure = try!(self.pressure_kpa()) * 1000.;
+            let pressure = self.pressure_kpa()? * 1000.;
             let sea_level_pa = sea_level_kpa * 1000.;
 
             let altitude = 44330. * (1. - (pressure / sea_level_pa).powf(0.1903));
@@ -170,7 +170,7 @@ mod sensors {
             /// address (dependent on `ALT ADDRESS` pin)
             pub fn new(mut i2cdev: T) -> Result<ADXL345Accelerometer<T>, T::Error> {
                 // setup standy mode to configure
-                try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00));
+                i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00)?;
 
                 // configure some defaults
                 try!(
@@ -179,13 +179,13 @@ mod sensors {
                         ADXL345DataRate::RATE_1600HZ as u8
                     )
                 );
-                try!(i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08));
-                try!(i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD));
-                try!(i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03));
-                try!(i2cdev.smbus_write_byte_data(REGISTER_OFSZ, 0xFE));
+                i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08)?;
+                i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD)?;
+                i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03)?;
+                i2cdev.smbus_write_byte_data(REGISTER_OFSZ, 0xFE)?;
 
                 // put device in measurement mode
-                try!(i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08));
+                i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08)?;
 
                 Ok(ADXL345Accelerometer { i2cdev: i2cdev })
             }
@@ -209,8 +209,8 @@ mod sensors {
                 // datasheet recommends multi-byte read to avoid reading
                 // an inconsistent set of data
                 let mut buf: [u8; 6] = [0u8; 6];
-                try!(self.i2cdev.write(&[REGISTER_X0]));
-                try!(self.i2cdev.read(&mut buf));
+                self.i2cdev.write(&[REGISTER_X0])?;
+                self.i2cdev.read(&mut buf)?;
 
                 let x: i16 = LittleEndian::read_i16(&[buf[0], buf[1]]);
                 let y: i16 = LittleEndian::read_i16(&[buf[2], buf[3]]);
@@ -304,8 +304,8 @@ mod sensors {
                 i2cdev: &mut I2CDevice<Error = E>,
             ) -> Result<MPL115A2Coefficients, E> {
                 let mut buf: [u8; 8] = [0; 8];
-                try!(i2cdev.write(&[REGISTER_ADDR_A0]));
-                try!(i2cdev.read(&mut buf));
+                i2cdev.write(&[REGISTER_ADDR_A0])?;
+                i2cdev.read(&mut buf)?;
                 Ok(MPL115A2Coefficients {
                     a0: calc_coefficient(buf[0], buf[1], 12, 3, 0),
                     b1: calc_coefficient(buf[2], buf[3], 2, 13, 0),
@@ -321,7 +321,7 @@ mod sensors {
                 i2cdev: &mut I2CDevice<Error = E>,
             ) -> Result<MPL115A2RawReading, E> {
                 // tell the chip to do an ADC read so we can get updated values
-                try!(i2cdev.smbus_write_byte_data(REGISTER_ADDR_START_CONVERSION, 0x00));
+                i2cdev.smbus_write_byte_data(REGISTER_ADDR_START_CONVERSION, 0x00)?;
 
                 // maximum conversion time is 3ms
                 thread::sleep(Duration::from_millis(3));
@@ -329,8 +329,8 @@ mod sensors {
                 // The SMBus functions read word values as little endian but that is not
                 // what we want
                 let mut buf = [0_u8; 4];
-                try!(i2cdev.write(&[REGISTER_ADDR_PADC]));
-                try!(i2cdev.read(&mut buf));
+                i2cdev.write(&[REGISTER_ADDR_PADC])?;
+                i2cdev.read(&mut buf)?;
                 let padc: u16 = BigEndian::read_u16(&buf) >> 6;
                 let tadc: u16 = BigEndian::read_u16(&buf[2..]) >> 6;
                 Ok(MPL115A2RawReading {
@@ -364,7 +364,7 @@ mod sensors {
         {
             /// Create sensor accessor for MPL115A2 on the provided i2c bus path
             pub fn new(mut i2cdev: T) -> Result<MPL115A2BarometerThermometer<T>, T::Error> {
-                let coeff = try!(MPL115A2Coefficients::new(&mut i2cdev));
+                let coeff = MPL115A2Coefficients::new(&mut i2cdev)?;
                 Ok(MPL115A2BarometerThermometer {
                     i2cdev: i2cdev,
                     coeff: coeff,
@@ -379,7 +379,7 @@ mod sensors {
             type Error = T::Error;
 
             fn pressure_kpa(&mut self) -> Result<f32, T::Error> {
-                let reading = try!(MPL115A2RawReading::new(&mut self.i2cdev));
+                let reading = MPL115A2RawReading::new(&mut self.i2cdev)?;
                 Ok(reading.pressure_kpa(&self.coeff))
             }
         }
@@ -391,7 +391,7 @@ mod sensors {
             type Error = T::Error;
 
             fn temperature_celsius(&mut self) -> Result<f32, T::Error> {
-                let reading = try!(MPL115A2RawReading::new(&mut self.i2cdev));
+                let reading = MPL115A2RawReading::new(&mut self.i2cdev)?;
                 Ok(reading.temperature_celsius())
             }
         }

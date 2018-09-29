@@ -93,15 +93,15 @@ impl LinuxI2CDevice {
     pub fn new<P: AsRef<Path>>(path: P,
                                slave_address: u16)
                                -> Result<LinuxI2CDevice, LinuxI2CError> {
-        let file = try!(OpenOptions::new()
+        let file = OpenOptions::new()
                             .read(true)
                             .write(true)
-                            .open(path));
+                            .open(path)?;
         let mut device = LinuxI2CDevice {
             devfile: file,
             slave_address: 0, // will be set later
         };
-        try!(device.set_slave_address(slave_address));
+        device.set_slave_address(slave_address)?;
         Ok(device)
     }
 
@@ -117,7 +117,7 @@ impl LinuxI2CDevice {
     /// necessary if you need to change the slave device and you do
     /// not want to create a new device.
     pub fn set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
-        try!(ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address));
+        ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address)?;
         self.slave_address = slave_address;
         Ok(())
     }

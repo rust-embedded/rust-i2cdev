@@ -181,9 +181,9 @@ mod ioctl {
 
 
 pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
-    try!(unsafe {
-        ioctl::set_i2c_slave_address(fd, slave_address as i32)
-    });
+    unsafe {
+        ioctl::set_i2c_slave_address(fd, slave_address as i32)?;
+    }
     Ok(())
 }
 
@@ -222,13 +222,13 @@ pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), I2CError> {
 #[inline]
 pub fn i2c_smbus_read_byte(fd: RawFd) -> Result<u8, I2CError> {
     let mut data = i2c_smbus_data::empty();
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_READ,
                          0,
                          I2CSMBusSize::I2C_SMBUS_BYTE,
-                         &mut data)
-    });
+                         &mut data)?
+    }
     Ok(data.block[0])
 }
 
@@ -246,13 +246,13 @@ pub fn i2c_smbus_write_byte(fd: RawFd, value: u8) -> Result<(), I2CError> {
 #[inline]
 pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, I2CError> {
     let mut data = i2c_smbus_data::empty();
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_READ,
                          register,
                          I2CSMBusSize::I2C_SMBUS_BYTE_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
     Ok(data.block[0])
 }
 
@@ -260,26 +260,26 @@ pub fn i2c_smbus_read_byte_data(fd: RawFd, register: u8) -> Result<u8, I2CError>
 pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(), I2CError> {
     let mut data = i2c_smbus_data::empty();
     data.block[0] = value;
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
                          register,
                          I2CSMBusSize::I2C_SMBUS_BYTE_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
     Ok(())
 }
 
 #[inline]
 pub fn i2c_smbus_read_word_data(fd: RawFd, register: u8) -> Result<u16, I2CError> {
     let mut data = i2c_smbus_data::empty();
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_READ,
                          register,
                          I2CSMBusSize::I2C_SMBUS_WORD_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    };
 
     Ok(Cursor::new(&data.block[..])
            .read_u16::<NativeEndian>()
@@ -294,13 +294,13 @@ pub fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<
         .write_u16::<NativeEndian>(value)
         .unwrap();
 
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
                          register,
                          I2CSMBusSize::I2C_SMBUS_WORD_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    };
     Ok(())
 }
 
@@ -311,13 +311,13 @@ pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16
         .write_u16::<NativeEndian>(value)
         .unwrap();
 
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
                          register,
                          I2CSMBusSize::I2C_SMBUS_PROC_CALL,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
     Ok(Cursor::new(&data.block[..])
            .read_u16::<NativeEndian>()
            .unwrap())
@@ -326,13 +326,13 @@ pub fn i2c_smbus_process_call(fd: RawFd, register: u8, value: u16) -> Result<u16
 #[inline]
 pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, I2CError> {
     let mut data = i2c_smbus_data::empty();
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_READ,
                          register,
                          I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
 
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
@@ -343,13 +343,13 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, I2C
 pub fn i2c_smbus_read_i2c_block_data(fd: RawFd, register: u8, len: u8) -> Result<Vec<u8>, I2CError> {
     let mut data = i2c_smbus_data::empty();
     data.block[0] = len;
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_READ,
                          register,
                          I2CSMBusSize::I2C_SMBUS_I2C_BLOCK_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
 
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
@@ -369,13 +369,13 @@ pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Res
     for i in 1..(len + 1) {
         data.block[i] = values[i - 1];
     }
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
                          register,
                          I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
     Ok(())
 }
 
@@ -394,13 +394,13 @@ pub fn i2c_smbus_write_i2c_block_data(fd: RawFd,
     for i in 1..(len + 1) {
         data.block[i] = values[i - 1];
     }
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
                          register,
                          I2CSMBusSize::I2C_SMBUS_I2C_BLOCK_DATA,
-                         &mut data)
-    });
+                         &mut data)?;
+    }
     Ok(())
 }
 
@@ -416,13 +416,13 @@ pub fn i2c_smbus_process_call_block(fd: RawFd, register: u8, values: &[u8]) -> R
     for i in 1..(len + 1) {
         data.block[i] = values[i - 1];
     }
-    try!(unsafe {
+    unsafe {
         i2c_smbus_access(fd,
                          I2CSMBusReadWrite::I2C_SMBUS_WRITE,
                          register,
                          I2CSMBusSize::I2C_SMBUS_BLOCK_PROC_CALL,
-                         &mut data)
-    });
+                         &mut data)?;
+    };
 
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
