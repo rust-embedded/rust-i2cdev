@@ -175,8 +175,8 @@ mod ioctl {
     use super::{I2C_SLAVE, I2C_SMBUS};
     pub use super::i2c_smbus_ioctl_data;
 
-    ioctl!(bad write_int set_i2c_slave_address with I2C_SLAVE);
-    ioctl!(bad write_ptr i2c_smbus with I2C_SMBUS; i2c_smbus_ioctl_data);
+    ioctl_write_int_bad!(set_i2c_slave_address, I2C_SLAVE);
+    ioctl_write_ptr_bad!(i2c_smbus, I2C_SMBUS, i2c_smbus_ioctl_data);
 }
 
 
