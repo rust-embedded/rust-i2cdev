@@ -1,5 +1,4 @@
-Rust I2cdev
-===========
+# Rust I2cdev
 
 [![Build Status](https://travis-ci.org/rust-embedded/rust-i2cdev.svg?branch=master)](https://travis-ci.org/rust-embedded/rust-i2cdev)
 [![Version](https://img.shields.io/crates/v/i2cdev.svg)](https://crates.io/crates/i2cdev)
@@ -20,8 +19,7 @@ Linux can be found in
 [linux-embedded-hal](https://crates.io/crates/linux-embedded-hal) which, at
 present, uses this crate as the backend for I2C.
 
-Example/API
------------
+## Example/API
 
 The source includes an example of using the library to talk to a Wii
 Nunchuck (which has an i2c interface).
@@ -63,8 +61,7 @@ fn i2cfun() -> Result<(), LinuxI2CError> {
 In addition to the Read/Write traits, the following methods are
 available via the [I2CDevice trait](https://rust-embedded.github.io/rust-i2cdev/i2cdev/core/trait.I2CDevice.html).
 
-Features
---------
+## Features
 
 The following features are implemented and planned for the library:
 
@@ -79,22 +76,33 @@ The following features are implemented and planned for the library:
 - [ ] Add examples for non-smbus ioctl methods
 - [ ] Unit Testing
 
-Cross Compiling
----------------
+## Cross Compiling
 
 Most likely, the machine you are running on is not your development
 machine (although it could be).  In those cases, you will need to
 cross-compile.  See https://github.com/japaric/rust-cross for pointers.
 
-License
--------
+## License
 
-```
-Copyright (c) 2015, Paul Osborne <ospbau@gmail.com>
+Licensed under either of
 
-Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-http://www.apache.org/license/LICENSE-2.0> or the MIT license
-<LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-option.  This file may not be copied, modified, or distributed
-except according to those terms.
-```
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
+
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+
+## Code of Conduct
+
+Contribution to this crate is organized under the terms of the [Rust Code of
+Conduct][CoC], the maintainer of this crate, the [Embedded Linux Team][team], promises
+to intervene to uphold that code of conduct.
+
+[CoC]: CODE_OF_CONDUCT.md
+[team]: https://github.com/rust-embedded/wg#the-embedded-linux-team
