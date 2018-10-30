@@ -40,7 +40,7 @@ bitflags! {
 }
 
 #[repr(C)]
-struct i2c_msg {
+pub struct i2c_msg {
     /// slave address
     addr: u16,
     /// serialized I2CMsgFlags
@@ -147,7 +147,7 @@ const I2C_FUNCS: u16 = 0x0705;
 const I2C_RDWR: u16 = 0x0707;
 const I2C_PEC: u16 = 0x0708;
 const I2C_SMBUS: u16 = 0x0720;
-const I2C_RDRW_IOCTL_MAX_MSGS: u8 = 42;
+const I2C_RDRW_IOCTL_MAX_MSGS: usize = 42;
 
 /// This is the structure as used in the I2C_SMBUS ioctl call
 #[repr(C)]
@@ -164,19 +164,21 @@ pub struct i2c_smbus_ioctl_data {
 
 /// This is the structure as used in the I2C_RDWR ioctl call
 #[repr(C)]
-struct i2c_rdwr_ioctl_data {
+pub struct i2c_rdwr_ioctl_data {
     // struct i2c_msg __user *msgs;
-    msgs: *mut i2c_msg,
-    // __u32 nmsgs;
-    nmsgs: u32,
+    msgs: *const i2c_msg,
+    // __i32 nmsgs;
+    nmsgs: i32,
 }
 
 mod ioctl {
-    use super::{I2C_SLAVE, I2C_SMBUS};
-    pub use super::i2c_smbus_ioctl_data;
+    use super::{I2C_SLAVE, I2C_SMBUS, I2C_RDWR};
+    use super::i2c_smbus_ioctl_data;
+    use super::i2c_rdwr_ioctl_data;
 
     ioctl_write_int_bad!(set_i2c_slave_address, I2C_SLAVE);
     ioctl_write_ptr_bad!(i2c_smbus, I2C_SMBUS, i2c_smbus_ioctl_data);
+    ioctl_write_ptr_bad!(i2c_rdrw, I2C_RDWR, i2c_rdwr_ioctl_data);
 }
 
 
@@ -428,4 +430,19 @@ pub fn i2c_smbus_process_call_block(fd: RawFd, register: u8, values: &[u8]) -> R
     // 1 and ending after count bytes after that
     let count = data.block[0];
     Ok((&data.block[1..(count + 1) as usize]).to_vec())
+}
+
+#[inline]
+pub fn i2c_rdwr(fd: RawFd, values: &[i2c_msg]) -> Result<(), I2CError> {
+    // TODO: Find out if this is the best course of action or if we should let Linux throw the error
+    assert!(values.len() <= I2C_RDRW_IOCTL_MAX_MSGS);
+
+    let i2c_data = i2c_rdwr_ioctl_data {
+        msgs: values.as_ptr(),
+        nmsgs: values.len() as i32,
+    };
+
+    unsafe {
+        ioctl::i2c_rdrw(fd, &i2c_data).map(drop)
+    }
 }

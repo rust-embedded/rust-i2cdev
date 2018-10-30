@@ -57,7 +57,7 @@ impl I2CRegisterMap {
     }
 }
 
-struct MockMessage;
+pub struct MockMessage;
 
 impl I2CMessage for MockMessage {
     fn read(data: &[u8]) -> Self {
@@ -86,6 +86,7 @@ impl MockI2CDevice {
 
 impl I2CDevice for MockI2CDevice {
     type Error = io::Error;
+    type I2CMessage = MockMessage;
 
     fn read(&mut self, data: &mut [u8]) -> I2CResult<()> {
         self.regmap.read(data)
@@ -119,7 +120,7 @@ impl I2CDevice for MockI2CDevice {
         unimplemented!()
     }
 
-    fn transfer<MockMessage>(&self, messages: &[MockMessage]) -> Result<(), Self::Error> {
+    fn transfer(&self, messages: &[MockMessage]) -> Result<(), Self::Error> {
         unimplemented!()
     }
 }

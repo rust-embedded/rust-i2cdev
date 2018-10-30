@@ -16,6 +16,7 @@ use std::error::Error;
 /// Linux i2cdev interface.
 pub trait I2CDevice {
     type Error: Error;
+    type I2CMessage;
 
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> Result<(), Self::Error>;
@@ -113,7 +114,7 @@ pub trait I2CDevice {
     
     /// Send a batch of messages. Useful for when multiple buffers need to be
     /// sent or recieved without an I2C `stop` flag.
-    fn transfer<M: I2CMessage>(&self, messages: &[M]) -> Result<(), Self::Error>;
+    fn transfer(&self, messages: &[Self::I2CMessage]) -> Result<(), Self::Error>;
 }
 
 /// Messages sent to / from an I2C device as a batch

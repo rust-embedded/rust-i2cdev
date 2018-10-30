@@ -9,7 +9,7 @@
 use ffi;
 use core::{
     I2CDevice,
-    I2CMessage
+    I2CMessage,
 };
 use std::error::Error;
 use std::path::Path;
@@ -128,6 +128,7 @@ impl LinuxI2CDevice {
 
 impl I2CDevice for LinuxI2CDevice {
     type Error = LinuxI2CError;
+    type I2CMessage = LinuxMessage;
 
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> Result<(), LinuxI2CError> {
@@ -224,12 +225,12 @@ impl I2CDevice for LinuxI2CDevice {
         ffi::i2c_smbus_process_call_block(self.as_raw_fd(), register, values).map_err(From::from)
     }
 
-    fn transfer<LinuxMessage>(&self, messages: &[LinuxMessage]) -> Result<(), Self::Error> {
-        unimplemented!()
+    fn transfer(&self, messages: &[LinuxMessage]) -> Result<(), LinuxI2CError> {
+        ffi::i2c_rdwr(self.as_raw_fd(), messages).map_err(From::from)
     }
 }
 
-struct LinuxMessage;
+type LinuxMessage = ffi::i2c_msg;
 
 impl I2CMessage for LinuxMessage {
     fn read(data: &[u8]) -> Self {
