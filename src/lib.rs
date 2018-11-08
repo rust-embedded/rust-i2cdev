@@ -12,6 +12,35 @@
 //! with i2c devices under Linux.  The API wraps the Linux
 //! kernel interface for interacting with i2c in userspace:
 //! https://www.kernel.org/doc/Documentation/i2c/dev-interface
+//! ```rust,no_run
+//! extern crate i2cdev;
+//! 
+//! use std::thread;
+//! use std::time::Duration;
+//!
+//! use i2cdev::core::*;
+//! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
+//!
+//! const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
+//! 
+//! // real code should probably not use unwrap()
+//! fn i2cfun() -> Result<(), LinuxI2CError> {
+//!     let mut dev = LinuxI2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR)?;
+//!
+//!     // init sequence
+//!     dev.smbus_write_byte_data(0xF0, 0x55)?;
+//!     dev.smbus_write_byte_data(0xFB, 0x00)?;
+//!     thread::sleep(Duration::from_millis(100));
+//!
+//!     loop {
+//!         let mut buf: [u8; 6] = [0; 6];
+//!         dev.smbus_write_byte(0x00).unwrap();
+//!         thread::sleep(Duration::from_millis(10));
+//!         dev.read(&mut buf).unwrap();
+//!         println!("Reading: {:?}", buf);
+//!     }
+//! }
+//! ```
 
 #![crate_name = "i2cdev"]
 #![crate_type = "lib"]
