@@ -27,38 +27,7 @@ The source includes an example of using the library to talk to a Wii
 Nunchuck (which has an i2c interface).
 [Go View the Example](https://github.com/rust-embedded/rust-i2cdev/blob/master/examples/nunchuck.rs).
 
-Here's a real quick example showing the guts of how you create
-device and start talking to it... 
-
-```rust,no_run,skeptic-template
-extern crate i2cdev;
-
-use std::thread;
-use std::time::Duration;
-
-use i2cdev::core::*;
-use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
-
-const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
-
-// real code should probably not use unwrap()
-fn i2cfun() -> Result<(), LinuxI2CError> {
-    let mut dev = LinuxI2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR)?;
-
-    // init sequence
-    dev.smbus_write_byte_data(0xF0, 0x55)?;
-    dev.smbus_write_byte_data(0xFB, 0x00)?;
-    thread::sleep(Duration::from_millis(100));
-
-    loop {
-        let mut buf: [u8; 6] = [0; 6];
-        dev.smbus_write_byte(0x00).unwrap();
-        thread::sleep(Duration::from_millis(10));
-        dev.read(&mut buf).unwrap();
-        println!("Reading: {:?}", buf);
-    }
-}
-```
+The [Documentation](https://docs.rs/i2cdev) contains a quick overview of how to get started with an i2c device.
 
 In addition to the Read/Write traits, the following methods are
 available via the [I2CDevice trait](https://rust-embedded.github.io/rust-i2cdev/i2cdev/core/trait.I2CDevice.html).
