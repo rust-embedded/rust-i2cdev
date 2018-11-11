@@ -18,37 +18,16 @@ use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 
 pub type I2CError = nix::Error;
 
-bitflags! {
-    struct I2CMsgFlags: u16 {
-        /// this is a ten bit chip address
-        const I2C_M_TEN = 0x0010;
-        /// read data, from slave to master
-        const I2C_M_RD = 0x0001;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_STOP = 0x8000;
-        /// if I2C_FUNC_NOSTART
-        const I2C_M_NOSTART = 0x4000;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_REV_DIR_ADDR = 0x2000;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_IGNORE_NAK = 0x1000;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_NO_RD_ACK = 0x0800;
-        /// length will be first received byte
-        const I2C_M_RECV_LEN = 0x0400;
-    }
-}
-
 #[repr(C)]
 pub struct i2c_msg {
     /// slave address
-    addr: u16,
+    pub(crate) addr: u16,
     /// serialized I2CMsgFlags
-    flags: u16,
+    pub(crate) flags: u16,
     /// msg length
-    len: u16,
+    pub(crate) len: u16,
     /// pointer to msg data
-    buf: *mut u8,
+    pub(crate) buf: *const u8,
 }
 
 bitflags! {

@@ -60,15 +60,17 @@ impl I2CRegisterMap {
 pub struct MockMessage;
 
 impl I2CMessage for MockMessage {
-    fn read(data: &[u8]) -> Self {
+    type Flags = ();
+
+    fn read(&self, _data: &[u8]) -> Self {
         unimplemented!();
     }
 
-    fn write(&self, data: &[u8]) -> Self {
+    fn write(&self, _data: &[u8]) -> Self {
         unimplemented!();
     }
 
-    fn custom(&self, data: &[u8], address: u16, flags: u16) -> Self {
+    fn custom(&self, _data: &[u8], _address: u16, _flags: ()) -> Self {
         unimplemented!();
     }
 }
@@ -120,7 +122,7 @@ impl I2CDevice for MockI2CDevice {
         unimplemented!()
     }
 
-    fn transfer(&self, messages: &[MockMessage]) -> Result<(), Self::Error> {
+    fn transfer(&self, _messages: &[MockMessage]) -> Result<(), Self::Error> {
         unimplemented!()
     }
 }

@@ -232,16 +232,51 @@ impl I2CDevice for LinuxI2CDevice {
 
 type LinuxMessage = ffi::i2c_msg;
 
+bitflags! {
+    /// Various flags used by the i2c_rdwr ioctl on Linux. For details, see
+    /// https://www.kernel.org/doc/Documentation/i2c/i2c-protocol
+    /// 
+    /// In general, these are for special cases and should not be needed
+    pub struct I2CMsgFlags: u16 {
+        /// Use ten bit addressing on this message
+        const TenBitAddress = 0x0010;
+        /// Read data, from slave to master
+        const Read = 0x0001;
+        /// Force an I2C stop condition on this message
+        const Stop = 0x8000;
+        /// Avoid sending an I2C start condition on this message
+        const NoStart = 0x4000;
+        /// If you need to invert a 'read' command bit to a 'write'
+        const InvertCommand = 0x2000;
+        /// Force this message to ignore I2C negative acknowlegements
+        const IgnoreNack = 0x1000;
+        /// Force message to ignore acknowledgement
+        const IgnoreAck = 0x0800;
+        /// Allow the client to specify how many bytes it will send
+        const UseRecieveLength = 0x0400;
+    }
+}
+
 impl I2CMessage for LinuxMessage {
-    fn read(data: &[u8]) -> Self {
-        unimplemented!();
+    type Flags = I2CMsgFlags;
+
+    fn custom(&self, data: &[u8], address: u16, flags: I2CMsgFlags) -> LinuxMessage {
+        // Convert from special type to u16
+        let flags = flags.bits();
+
+        Self {
+            addr: address,
+            flags,
+            len: data.len() as u16,
+            buf: data.as_ptr(),
+        }
     }
 
-    fn write(&self, data: &[u8]) -> Self {
-        unimplemented!();
+    fn read(&self, data: &[u8]) -> LinuxMessage {
+        self.custom(data, self.addr, I2CMsgFlags::Read)
     }
 
-    fn custom(&self, data: &[u8], address: u16, flags: u16) -> Self {
-        unimplemented!();
+    fn write(&self, data: &[u8]) -> LinuxMessage {
+        self.custom(data, self.addr, I2CMsgFlags::empty())
     }
 }

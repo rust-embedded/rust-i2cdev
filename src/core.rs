@@ -119,12 +119,14 @@ pub trait I2CDevice {
 
 /// Messages sent to / from an I2C device as a batch
 pub trait I2CMessage {
+    type Flags;
+
     /// Represents a read operation
-    fn read(data: &[u8]) -> Self;
+    fn read(&self, data: &[u8]) -> Self;
 
     /// Represents a write operation
     fn write(&self, data: &[u8]) -> Self;
 
     /// Represents a custom operation or special opperands
-    fn custom(&self, data: &[u8], address: u16, flags: u16) -> Self;
+    fn custom(&self, data: &[u8], address: u16, flags: Self::Flags) -> Self;
 }
