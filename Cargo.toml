@@ -17,7 +17,7 @@ https://www.kernel.org/doc/Documentation/i2c/dev-interface
 libc = "0.2"
 bitflags = "1"
 byteorder = "1"
-nix = "0.11"
+nix = "0.14"
 
 [dev-dependencies]
 docopt = "0.8"
