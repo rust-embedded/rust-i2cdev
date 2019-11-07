@@ -7,7 +7,7 @@
 // except according to those terms.
 
 use ffi;
-use core::I2CDevice;
+use core::{I2CDevice, I2CBus};
 use std::error::Error;
 use std::path::Path;
 use std::fs::File;
@@ -18,9 +18,16 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
 
+// Expose these core structs from this module
+pub use core::{I2CMsgFlags, I2CMsg};
+
 pub struct LinuxI2CDevice {
     devfile: File,
     slave_address: u16,
+}
+
+pub struct LinuxI2CBus {
+    devfile: File,
 }
 
 #[derive(Debug)]
@@ -83,6 +90,12 @@ impl Error for LinuxI2CError {
 }
 
 impl AsRawFd for LinuxI2CDevice {
+    fn as_raw_fd(&self) -> RawFd {
+        self.devfile.as_raw_fd()
+    }
+}
+
+impl AsRawFd for LinuxI2CBus {
     fn as_raw_fd(&self) -> RawFd {
         self.devfile.as_raw_fd()
     }
@@ -219,5 +232,29 @@ impl I2CDevice for LinuxI2CDevice {
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, LinuxI2CError> {
         ffi::i2c_smbus_process_call_block(self.as_raw_fd(), register, values).map_err(From::from)
+    }
+}
+
+impl LinuxI2CBus {
+    /// Create a new LinuxI2CBus for the specified path
+    pub fn new<P: AsRef<Path>>(path: P)
+                               -> Result<LinuxI2CBus, LinuxI2CError> {
+        let file = OpenOptions::new()
+                            .read(true)
+                            .write(true)
+                            .open(path)?;
+        let bus = LinuxI2CBus {
+            devfile: file,
+        };
+        Ok(bus)
+    }
+}
+
+impl I2CBus for LinuxI2CBus {
+    type Error = LinuxI2CError;
+
+    /// Issue the provided sequence of I2C transactions
+    fn rdwr(&mut self, msgs: &mut Vec<I2CMsg>) -> Result<i32, LinuxI2CError> {
+        ffi::i2c_rdwr_read_write(self.as_raw_fd(), msgs).map_err(From::from)
     }
 }

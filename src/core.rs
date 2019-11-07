@@ -111,3 +111,103 @@ pub trait I2CDevice {
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, Self::Error>;
 }
+
+/// Interface to an I2C Bus from an I2C Master
+///
+/// This is used when the client wants to interact directly with the bus
+/// without specifying an I2C slave address up-front, either because it needs
+/// to communicate with multiple addresses without creatings separate
+/// I2CDevice objects, or because it wants to make used of the I2C_RDWR ioctl
+/// which allows the client to send and transmit multiple sets I2C data in a
+/// single operation, potentially to different I2C slave addresses.
+///
+/// Typical implementations will store state with references to the bus
+/// in use.  The trait is based on the Linux i2cdev interface.
+pub trait I2CBus {
+    type Error: Error;
+
+    // Performs multiple serially chained I2C read/write transactions.  On
+    // success the return code is the number of successfully executed
+    // transactions
+    fn rdwr<'a>(&mut self, msgs: &mut Vec<I2CMsg<'a>>) -> Result<i32, Self::Error>;
+}
+
+bitflags! {
+    pub struct I2CMsgFlags: u16 {
+        /// this is a ten bit chip address
+        const I2C_M_TEN = 0x0010;
+        /// read data, from slave to master
+        const I2C_M_RD = 0x0001;
+        /// if I2C_FUNC_PROTOCOL_MANGLING
+        const I2C_M_STOP = 0x8000;
+        /// if I2C_FUNC_NOSTART
+        const I2C_M_NOSTART = 0x4000;
+        /// if I2C_FUNC_PROTOCOL_MANGLING
+        const I2C_M_REV_DIR_ADDR = 0x2000;
+        /// if I2C_FUNC_PROTOCOL_MANGLING
+        const I2C_M_IGNORE_NAK = 0x1000;
+        /// if I2C_FUNC_PROTOCOL_MANGLING
+        const I2C_M_NO_RD_ACK = 0x0800;
+        /// length will be first received byte
+        const I2C_M_RECV_LEN = 0x0400;
+    }
+}
+
+/// Rust version of i2c_msg
+pub struct I2CMsg<'a> {
+    /// slave address
+    pub(crate) addr: u16,
+    /// serialized I2CMsgFlags
+    pub(crate) flags: u16,
+
+    /// msg length comes from msg Vector length
+
+    /// msg data to be sent/received
+    pub(crate) data: &'a mut Vec<u8>,
+}
+
+impl<'a> I2CMsg<'a> {
+    /// Create I2CMsg from address and data buffer
+    pub fn new(addr: u16, data: &'a mut Vec<u8>) -> Self {
+        I2CMsg {
+            addr,
+            flags: 0,
+            data
+        }
+    }
+
+    /// Set flags
+    pub fn set_flags(&mut self, flags: u16) {
+        self.flags = flags;
+    }
+
+    /// Get flags
+    pub fn flags(&mut self) -> u16 {
+        self.flags
+    }
+
+    /// Set addr
+    pub fn set_addr(&mut self, addr: u16) {
+        self.addr = addr;
+    }
+
+    /// Get addr
+    pub fn addr(&mut self) -> u16 {
+        self.addr
+    }
+
+    /// Set data
+    pub fn set_data(&mut self, data: &'a mut Vec<u8>) {
+        self.data = data;
+    }
+
+    /// Get addr
+    pub fn data(&mut self) -> Vec<u8> {
+        self.data.clone()
+    }
+
+    /// Sets the read flag
+    pub fn set_read(&mut self) {
+        self.flags |= I2CMsgFlags::I2C_M_RD.bits;
+    }
+}
