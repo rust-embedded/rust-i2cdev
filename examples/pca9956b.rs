@@ -10,9 +10,9 @@ extern crate i2cdev;
 extern crate docopt;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use i2cdev::linux::{LinuxI2CBus, I2CMsg};
+use i2cdev::core::{I2CBus, I2CMessage};
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use i2cdev::core::I2CBus;
+use i2cdev::linux::{LinuxI2CBus, LinuxI2CMessage};
 
 use std::env::args;
 use docopt::Docopt;
@@ -44,7 +44,7 @@ fn main() {
         Ok(bus) => bus,
         Err(_e) => {
             println!("Error opening I2C Bus {} {}", path, _e);
-            return
+            return;
         }
     };
     println!("Opened I2C Bus OK: {}", path);
@@ -53,30 +53,26 @@ fn main() {
     // 1) Write the MODE1 register address, with top bit indcating auto-
     //    increment should be enabled
     // 2) Read 10 bytes from the current register onwards
-    let mut dataw: Vec<u8> = vec![0b1000_0000]; 
-    let mut data: Vec<u8> = vec![0; 10]; 
-    let mut msgs: Vec<I2CMsg> = Vec::new();
-    msgs.push(I2CMsg::new(ADDR, &mut dataw));
-    msgs.push(I2CMsg::new(ADDR, &mut data));
-    msgs[1].set_read();
+    let mut data = [0; 10];
+    let mut msgs = [
+        LinuxI2CMessage::write(ADDR, &[0b1000_0000]),
+        LinuxI2CMessage::read(ADDR, &mut data),
+    ];
 
     // Send the messages to the kernel to process
-    match bus.rdwr(&mut msgs) {
-        Ok(rc) => {
-            println!("Successful RDWR call: {} messages processed", rc)
-        },
+    match bus.transfer(&mut msgs) {
+        Ok(rc) => println!("Successful transfer call: {} messages processed", rc),
         Err(_e) => {
             println!("Error reading/writing {}", _e);
-            return
-        },
+            return;
+        }
     }
 
     // Print the data read from the device.  A recently reset PCA9956B should
     // return:
     // 0x8005000000000000ff00
     let mut output = "Result: 0x".to_string();
-    let data = msgs[1].data();
-    for byte in data {
+    for byte in &data {
         output = format!("{}{:02x}", output, byte);
     }
     println!("{}", output);

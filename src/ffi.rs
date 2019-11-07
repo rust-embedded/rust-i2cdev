@@ -16,38 +16,21 @@ use std::io::Cursor;
 use std::os::unix::prelude::*;
 use std::marker::PhantomData;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use core::{I2CMsg};
 use libc::c_int;
 
 pub type I2CError = nix::Error;
 
 #[repr(C)]
-#[derive(Debug)]
-/// C version of i2c_msg structure
-// See linux/i2c.h
-struct i2c_msg<'a> {
+pub struct i2c_msg {
     /// slave address
-    addr: u16,
+    pub(crate) addr: u16,
     /// serialized I2CMsgFlags
-    flags: u16,
+    pub(crate) flags: u16,
     /// msg length
-    len: u16,
+    pub(crate) len: u16,
     /// pointer to msg data
-    buf: *mut u8,
-    _phantom: PhantomData<&'a mut u8>,
-}
-
-impl<'a, 'b> From<&'b mut I2CMsg<'a>> for i2c_msg<'a> {
-    fn from(msg: &mut I2CMsg) -> Self {
-        i2c_msg {
-            addr: msg.addr,
-            flags: msg.flags,
-            len: msg.data.len() as u16,
-            buf: msg.data.as_mut_ptr(),
-            _phantom: PhantomData
+    pub(crate) buf: *const u8,
         }
-    }
-}
 
 bitflags! {
     struct I2CFunctions: u32 {
@@ -163,9 +146,9 @@ pub struct i2c_smbus_ioctl_data {
 /// This is the structure as used in the I2C_RDWR ioctl call
 // see linux/i2c-dev.h
 #[repr(C)]
-pub struct i2c_rdwr_ioctl_data<'a> {
+pub struct i2c_rdwr_ioctl_data {
     // struct i2c_msg __user *msgs;
-    msgs: *mut i2c_msg<'a>,
+    msgs: *mut i2c_msg,
     // __u32 nmsgs;
     nmsgs: u32,
 }
@@ -430,30 +413,15 @@ pub fn i2c_smbus_process_call_block(fd: RawFd, register: u8, values: &[u8]) -> R
     Ok((&data.block[1..(count + 1) as usize]).to_vec())
 }
 
-// Returns the number of messages succesfully processed
-unsafe fn i2c_rdwr_access(fd: RawFd,
-                          msgs: *mut i2c_msg,
-                          nmsgs: usize)
-                          -> Result<(c_int), I2CError> {
-    let args = i2c_rdwr_ioctl_data {
-        msgs,
-        nmsgs: nmsgs as u32,
+#[inline]
+pub fn i2c_rdwr(fd: RawFd, values: &mut [i2c_msg]) -> Result<u32, I2CError> {
+    let i2c_data = i2c_rdwr_ioctl_data {
+        msgs: values.as_mut_ptr(),
+        nmsgs: values.len() as u32,
     };
 
-    ioctl::i2c_rdwr(fd, &args)
-}
-
-pub fn i2c_rdwr_read_write(fd: RawFd,
-                           msgs: &mut Vec<I2CMsg>) -> Result<(i32), I2CError> {
-    // Building the msgs to push is safe.
-    // We have to use iter_mut as buf needs to be mutable.
-    let mut cmsgs = msgs.iter_mut().map(<i2c_msg>::from).collect::<Vec<_>>();
-
-    // But calling the ioctl is definitely not!
     unsafe {
-        i2c_rdwr_access(fd,
-                        cmsgs.as_mut_ptr(),
-                        cmsgs.len())
+        let n = ioctl::i2c_rdwr(fd, &i2c_data)?;
+        Ok(n as u32)
     }
 }
-

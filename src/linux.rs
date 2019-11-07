@@ -19,7 +19,7 @@ use std::io::prelude::*;
 use std::os::unix::prelude::*;
 
 // Expose these core structs from this module
-pub use core::{I2CMsgFlags, I2CMsg};
+pub use core::I2CMessage;
 
 pub struct LinuxI2CDevice {
     devfile: File,
@@ -250,11 +250,71 @@ impl LinuxI2CBus {
     }
 }
 
+/// Linux I2C message
+pub type LinuxI2CMessage = ffi::i2c_msg;
+
 impl I2CBus for LinuxI2CBus {
     type Error = LinuxI2CError;
+    type Message = LinuxI2CMessage;
 
     /// Issue the provided sequence of I2C transactions
-    fn rdwr(&mut self, msgs: &mut Vec<I2CMsg>) -> Result<i32, LinuxI2CError> {
-        ffi::i2c_rdwr_read_write(self.as_raw_fd(), msgs).map_err(From::from)
+    fn transfer(&mut self, msgs: &mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+        ffi::i2c_rdwr(self.as_raw_fd(), msgs).map_err(From::from)
+    }
+}
+
+bitflags! {
+    /// Various flags used by the i2c_rdwr ioctl on Linux. For details, see
+    /// https://www.kernel.org/doc/Documentation/i2c/i2c-protocol
+    ///
+    /// In general, these are for special cases and should not be needed
+    pub struct I2CMessageFlags: u16 {
+        /// Use ten bit addressing on this message
+        const TEN_BIT_ADDRESS = 0x0010;
+        /// Read data, from slave to master
+        const READ = 0x0001;
+        /// Force an I2C stop condition on this message
+        const STOP = 0x8000;
+        /// Avoid sending an I2C start condition on this message
+        const NO_START = 0x4000;
+        /// If you need to invert a 'read' command bit to a 'write'
+        const INVERT_COMMAND = 0x2000;
+        /// Force this message to ignore I2C negative acknowlegements
+        const IGNORE_NACK = 0x1000;
+        /// Force message to ignore acknowledgement
+        const IGNORE_ACK = 0x0800;
+        /// Allow the client to specify how many bytes it will send
+        const USE_RECEIVE_LENGTH = 0x0400;
+    }
+}
+
+impl I2CMessage for LinuxI2CMessage {
+    fn read(slave_address: u16, data: &mut [u8]) -> LinuxI2CMessage {
+        Self {
+            addr: slave_address,
+            flags: I2CMessageFlags::READ.bits(),
+            len: data.len() as u16,
+            buf: data.as_ptr(),
+        }
+    }
+
+    fn write(slave_address: u16, data: &[u8]) -> LinuxI2CMessage {
+        Self {
+            addr: slave_address,
+            flags: I2CMessageFlags::empty().bits(),
+            len: data.len() as u16,
+            buf: data.as_ptr(),
+        }
+    }
+}
+
+impl LinuxI2CMessage {
+    pub fn with_flags(self, flags: I2CMessageFlags) -> Self {
+        Self {
+            addr: self.addr,
+            flags: flags.bits(),
+            len: self.len,
+            buf: self.buf,
+        }
     }
 }
