@@ -251,14 +251,14 @@ impl LinuxI2CBus {
 }
 
 /// Linux I2C message
-pub type LinuxI2CMessage = ffi::i2c_msg;
+pub type LinuxI2CMessage<'a> = ffi::i2c_msg;
 
-impl I2CBus for LinuxI2CBus {
+impl<'a> I2CBus<'a> for LinuxI2CBus {
     type Error = LinuxI2CError;
-    type Message = LinuxI2CMessage;
+    type Message = LinuxI2CMessage<'a>;
 
     /// Issue the provided sequence of I2C transactions
-    fn transfer(&mut self, msgs: &mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+    fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
         ffi::i2c_rdwr(self.as_raw_fd(), msgs).map_err(From::from)
     }
 }
@@ -288,8 +288,8 @@ bitflags! {
     }
 }
 
-impl I2CMessage for LinuxI2CMessage {
-    fn read(slave_address: u16, data: &mut [u8]) -> LinuxI2CMessage {
+impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
+    fn read(slave_address: u16, data: &'a mut [u8]) -> LinuxI2CMessage {
         Self {
             addr: slave_address,
             flags: I2CMessageFlags::READ.bits(),
@@ -298,7 +298,7 @@ impl I2CMessage for LinuxI2CMessage {
         }
     }
 
-    fn write(slave_address: u16, data: &[u8]) -> LinuxI2CMessage {
+    fn write(slave_address: u16, data: &'a [u8]) -> LinuxI2CMessage {
         Self {
             addr: slave_address,
             flags: I2CMessageFlags::empty().bits(),
@@ -308,7 +308,7 @@ impl I2CMessage for LinuxI2CMessage {
     }
 }
 
-impl LinuxI2CMessage {
+impl<'a> LinuxI2CMessage<'a> {
     pub fn with_flags(self, flags: I2CMessageFlags) -> Self {
         Self {
             addr: self.addr,

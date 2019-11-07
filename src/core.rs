@@ -123,21 +123,21 @@ pub trait I2CDevice {
 ///
 /// Typical implementations will store state with references to the bus
 /// in use.  The trait is based on the Linux i2cdev interface.
-pub trait I2CBus {
+pub trait I2CBus<'a> {
     type Error: Error;
-    type Message: I2CMessage;
+    type Message: I2CMessage<'a>;
 
     // Performs multiple serially chained I2C read/write transactions.  On
     // success the return code is the number of successfully executed
     // transactions
-    fn transfer(&mut self, msgs: &mut [Self::Message]) -> Result<u32, Self::Error>;
+    fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, Self::Error>;
 }
 
 /// Read/Write I2C message
-pub trait I2CMessage {
+pub trait I2CMessage<'a> {
     /// Read data from device
-    fn read(slave_address: u16, data: &mut [u8]) -> Self;
+    fn read(slave_address: u16, data: &'a mut [u8]) -> Self;
 
     /// Write data to device
-    fn write(slave_address: u16, data: &[u8]) -> Self;
+    fn write(slave_address: u16, data: &'a [u8]) -> Self;
 }
