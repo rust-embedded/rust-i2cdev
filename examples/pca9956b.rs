@@ -10,7 +10,7 @@ extern crate i2cdev;
 extern crate docopt;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use i2cdev::core::{I2CBus, I2CMessage};
+use i2cdev::core::{I2CTransfer, I2CMessage};
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::{LinuxI2CBus, LinuxI2CMessage};
 

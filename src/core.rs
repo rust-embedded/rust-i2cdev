@@ -123,7 +123,7 @@ pub trait I2CDevice {
 ///
 /// Typical implementations will store state with references to the bus
 /// in use.  The trait is based on the Linux i2cdev interface.
-pub trait I2CBus<'a> {
+pub trait I2CTransfer<'a> {
     type Error: Error;
     type Message: I2CMessage<'a>;
 

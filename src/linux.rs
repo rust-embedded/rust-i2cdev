@@ -7,7 +7,7 @@
 // except according to those terms.
 
 use ffi;
-use core::{I2CDevice, I2CBus};
+use core::{I2CDevice, I2CTransfer};
 use std::error::Error;
 use std::path::Path;
 use std::fs::File;
@@ -253,7 +253,7 @@ impl LinuxI2CBus {
 /// Linux I2C message
 pub type LinuxI2CMessage<'a> = ffi::i2c_msg;
 
-impl<'a> I2CBus<'a> for LinuxI2CBus {
+impl<'a> I2CTransfer<'a> for LinuxI2CBus {
     type Error = LinuxI2CError;
     type Message = LinuxI2CMessage<'a>;
 
