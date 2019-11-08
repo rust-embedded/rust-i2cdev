@@ -235,6 +235,20 @@ impl I2CDevice for LinuxI2CDevice {
     }
 }
 
+impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
+    type Error = LinuxI2CError;
+    type Message = LinuxI2CMessage<'a>;
+
+    /// Issue the provided sequence of I2C transactions
+    fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+        for msg in messages.iter_mut() {
+            (*msg).addr = self.slave_address;
+        }
+        ffi::i2c_rdwr(self.as_raw_fd(), messages).map_err(From::from)
+    }
+}
+
+
 impl LinuxI2CBus {
     /// Create a new LinuxI2CBus for the specified path
     pub fn new<P: AsRef<Path>>(path: P)
@@ -289,18 +303,18 @@ bitflags! {
 }
 
 impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
-    fn read(slave_address: u16, data: &'a mut [u8]) -> LinuxI2CMessage {
+    fn read(data: &'a mut [u8]) -> LinuxI2CMessage {
         Self {
-            addr: slave_address,
+            addr: 0, // will be filled later
             flags: I2CMessageFlags::READ.bits(),
             len: data.len() as u16,
             buf: data.as_ptr(),
         }
     }
 
-    fn write(slave_address: u16, data: &'a [u8]) -> LinuxI2CMessage {
+    fn write(data: &'a [u8]) -> LinuxI2CMessage {
         Self {
-            addr: slave_address,
+            addr: 0, // will be filled later
             flags: I2CMessageFlags::empty().bits(),
             len: data.len() as u16,
             buf: data.as_ptr(),
@@ -309,6 +323,15 @@ impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
 }
 
 impl<'a> LinuxI2CMessage<'a> {
+    pub fn with_address(self, slave_address: u16) -> Self {
+        Self {
+            addr: slave_address,
+            flags: self.flags,
+            len: self.len,
+            buf: self.buf,
+        }
+    }
+
     pub fn with_flags(self, flags: I2CMessageFlags) -> Self {
         Self {
             addr: self.addr,

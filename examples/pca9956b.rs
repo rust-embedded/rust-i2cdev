@@ -55,8 +55,8 @@ fn main() {
     // 2) Read 10 bytes from the current register onwards
     let mut data = [0; 10];
     let mut msgs = [
-        LinuxI2CMessage::write(ADDR, &[0b1000_0000]),
-        LinuxI2CMessage::read(ADDR, &mut data),
+        LinuxI2CMessage::write(&[0b1000_0000]).with_address(ADDR),
+        LinuxI2CMessage::read(&mut data).with_address(ADDR),
     ];
 
     // Send the messages to the kernel to process

@@ -136,8 +136,8 @@ pub trait I2CTransfer<'a> {
 /// Read/Write I2C message
 pub trait I2CMessage<'a> {
     /// Read data from device
-    fn read(slave_address: u16, data: &'a mut [u8]) -> Self;
+    fn read(data: &'a mut [u8]) -> Self;
 
     /// Write data to device
-    fn write(slave_address: u16, data: &'a [u8]) -> Self;
+    fn write(data: &'a [u8]) -> Self;
 }

@@ -5,7 +5,7 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
-use core::I2CDevice;
+use core::{I2CDevice, I2CMessage, I2CTransfer};
 use std::io;
 
 pub type I2CResult<T> = io::Result<T>;
@@ -100,3 +100,46 @@ impl I2CDevice for MockI2CDevice {
         unimplemented!()
     }
 }
+
+#[derive(Debug)]
+enum MessageType<'a> {
+    Write(&'a [u8]),
+    Read(&'a mut [u8]),
+}
+
+pub struct MockI2CMessage<'a> {
+    msg_type: MessageType<'a>
+}
+
+impl<'a> I2CMessage<'a> for MockI2CMessage<'a> {
+    fn read(data: &'a mut [u8]) -> Self {
+        Self {
+            msg_type: MessageType::Read(data),
+        }
+    }
+
+    /// Write data to device
+    fn write(data: &'a [u8]) -> Self {
+        Self {
+            msg_type: MessageType::Write(data),
+        }
+    }
+}
+
+impl<'a> I2CTransfer<'a> for MockI2CDevice
+where MockI2CDevice: I2CDevice {
+    type Error = io::Error;
+    type Message = MockI2CMessage<'a>;
+
+    /// Issue the provided sequence of I2C transactions
+    fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, Self::Error> {
+        for msg in messages.iter_mut() {
+            match &mut msg.msg_type {
+                MessageType::Read(data) => self.read(data)?,
+                MessageType::Write(data) => self.write(data)?,
+            }
+        }
+        Ok(messages.len() as u32)
+    }
+}
+
