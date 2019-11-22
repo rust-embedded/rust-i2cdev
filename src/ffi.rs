@@ -30,7 +30,7 @@ pub struct i2c_msg {
     pub(crate) len: u16,
     /// pointer to msg data
     pub(crate) buf: *const u8,
-        }
+}
 
 bitflags! {
     struct I2CFunctions: u32 {
@@ -420,8 +420,9 @@ pub fn i2c_rdwr(fd: RawFd, values: &mut [i2c_msg]) -> Result<u32, I2CError> {
         nmsgs: values.len() as u32,
     };
 
+    let n;
     unsafe {
-        let n = ioctl::i2c_rdwr(fd, &i2c_data)?;
-        Ok(n as u32)
+        n = ioctl::i2c_rdwr(fd, &i2c_data)?;
     }
+    Ok(n as u32)
 }
