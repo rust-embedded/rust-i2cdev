@@ -22,9 +22,9 @@ use i2cdev::linux::*;
 #[cfg(any(target_os = "linux", taret_os = "android"))]
 mod nunchuck {
     use std::error::Error;
+    use std::fmt;
     use std::thread;
     use std::time::Duration;
-    use std::fmt;
 
     use i2cdev::core::I2CDevice;
 
@@ -130,11 +130,10 @@ mod nunchuck {
             let mut buf: [u8; 6] = [0; 6];
 
             // tell the nunchuck to prepare a sample
-            try!(
-                self.i2cdev
-                    .smbus_write_byte(0x00)
-                    .map_err(NunchuckError::Error)
-            );
+            try!(self
+                .i2cdev
+                .smbus_write_byte(0x00)
+                .map_err(NunchuckError::Error));
 
             // now, read it!
             thread::sleep(Duration::from_millis(10));
@@ -196,8 +195,8 @@ mod nunchuck {
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use nunchuck::*;
 
-use std::env::args;
 use docopt::Docopt;
+use std::env::args;
 
 const USAGE: &'static str = "
 Reading Wii Nunchuck data via Linux i2cdev.

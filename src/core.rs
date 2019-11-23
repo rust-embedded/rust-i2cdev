@@ -105,7 +105,11 @@ pub trait I2CDevice {
     /// Write a block of up to 32 bytes from a device
     ///
     /// Uses write_i2c_block_data instead write_block_data.
-    fn smbus_write_i2c_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), Self::Error>;
+    fn smbus_write_i2c_block_data(
+        &mut self,
+        register: u8,
+        values: &[u8],
+    ) -> Result<(), Self::Error>;
 
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.

@@ -97,8 +97,8 @@
 #![crate_name = "i2cdev"]
 #![crate_type = "lib"]
 
-extern crate libc;
 extern crate byteorder;
+extern crate libc;
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
