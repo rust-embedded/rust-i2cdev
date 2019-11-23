@@ -6,5 +6,7 @@ os:
 - osx
 
 script:
+- rustup component add rustfmt
 - cargo build --verbose
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cargo test --verbose; fi
+- cargo fmt -- --check
