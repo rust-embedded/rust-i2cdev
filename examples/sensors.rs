@@ -183,7 +183,7 @@ mod sensors {
                 // put device in measurement mode
                 i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x08)?;
 
-                Ok(ADXL345Accelerometer { i2cdev: i2cdev })
+                Ok(ADXL345Accelerometer { i2cdev })
             }
 
             /// Get the device id
@@ -212,9 +212,9 @@ mod sensors {
                 let y: i16 = LittleEndian::read_i16(&[buf[2], buf[3]]);
                 let z: i16 = LittleEndian::read_i16(&[buf[4], buf[5]]);
                 Ok(AccelerometerSample {
-                    x: (x as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
-                    y: (y as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
-                    z: (z as f32 / 1023.0) * (ACCEL_RANGE * 2.0),
+                    x: (f32::from(x) / 1023.0) * (ACCEL_RANGE * 2.0),
+                    y: (f32::from(y) / 1023.0) * (ACCEL_RANGE * 2.0),
+                    z: (f32::from(z) / 1023.0) * (ACCEL_RANGE * 2.0),
                 })
             }
         }
@@ -285,7 +285,7 @@ mod sensors {
             // If values are less than 16 bytes, need to adjust
             let extrabits = 16 - integer_bits - fractional_bits - 1;
             let rawval: i16 = BigEndian::read_i16(&[msb, lsb]);
-            let adj = (rawval as f32 / 2_f32.powi(fractional_bits + extrabits))
+            let adj = (f32::from(rawval) / 2_f32.powi(fractional_bits + extrabits))
                 / 10_f32.powi(dec_pt_zero_pad);
             adj
         }
@@ -297,7 +297,7 @@ mod sensors {
             /// order.  This gets the raw, unconverted value of each
             /// coefficient.
             pub fn new<E: Error>(
-                i2cdev: &mut I2CDevice<Error = E>,
+                i2cdev: &mut dyn I2CDevice<Error = E>,
             ) -> Result<MPL115A2Coefficients, E> {
                 let mut buf: [u8; 8] = [0; 8];
                 i2cdev.write(&[REGISTER_ADDR_A0])?;
@@ -314,7 +314,7 @@ mod sensors {
         impl MPL115A2RawReading {
             /// Create a new reading from the provided I2C Device
             pub fn new<E: Error>(
-                i2cdev: &mut I2CDevice<Error = E>,
+                i2cdev: &mut dyn I2CDevice<Error = E>,
             ) -> Result<MPL115A2RawReading, E> {
                 // tell the chip to do an ADC read so we can get updated values
                 i2cdev.smbus_write_byte_data(REGISTER_ADDR_START_CONVERSION, 0x00)?;
@@ -329,15 +329,12 @@ mod sensors {
                 i2cdev.read(&mut buf)?;
                 let padc: u16 = BigEndian::read_u16(&buf) >> 6;
                 let tadc: u16 = BigEndian::read_u16(&buf[2..]) >> 6;
-                Ok(MPL115A2RawReading {
-                    padc: padc,
-                    tadc: tadc,
-                })
+                Ok(MPL115A2RawReading { padc, tadc })
             }
 
             /// Calculate the temperature in centrigrade for this reading
             pub fn temperature_celsius(&self) -> f32 {
-                (self.tadc as f32 - 498.0) / -5.35 + 25.0
+                (f32::from(self.tadc) - 498.0) / -5.35 + 25.0
             }
 
             /// Calculate the pressure in pascals for this reading
@@ -345,8 +342,8 @@ mod sensors {
                 // Pcomp = a0 + (b1 + c12 * Tadc) * Padc + b2 * Tadc
                 // Pkpa = Pcomp * ((115 - 50) / 1023) + 50
                 let pcomp: f32 = coeff.a0
-                    + (coeff.b1 + coeff.c12 * self.tadc as f32) * self.padc as f32
-                    + (coeff.b2 * self.tadc as f32);
+                    + (coeff.b1 + coeff.c12 * f32::from(self.tadc)) * f32::from(self.padc)
+                    + (coeff.b2 * f32::from(self.tadc));
 
                 // scale has 1023 bits of range from 50 kPa to 115 kPa
                 let pkpa: f32 = pcomp * ((115.0 - 50.0) / 1023.0) + 50.0;
@@ -361,10 +358,7 @@ mod sensors {
             /// Create sensor accessor for MPL115A2 on the provided i2c bus path
             pub fn new(mut i2cdev: T) -> Result<MPL115A2BarometerThermometer<T>, T::Error> {
                 let coeff = MPL115A2Coefficients::new(&mut i2cdev)?;
-                Ok(MPL115A2BarometerThermometer {
-                    i2cdev: i2cdev,
-                    coeff: coeff,
-                })
+                Ok(MPL115A2BarometerThermometer { i2cdev, coeff })
             }
         }
 
@@ -457,7 +451,7 @@ mod sensors {
     }
 }
 
-const USAGE: &'static str = "
+const USAGE: &str = "
 Reading sensor data from a variety of sensors
 
 Usage:
@@ -476,7 +470,7 @@ fn main() {}
 #[cfg(any(target_os = "linux", target_os = "android"))]
 fn main() {
     let args = Docopt::new(USAGE)
-        .and_then(|d| d.argv(args().into_iter()).parse())
+        .and_then(|d| d.argv(args()).parse())
         .unwrap_or_else(|e| e.exit());
     let device = args.get_str("<device>");
     let mpl115a2_i2cdev = LinuxI2CDevice::new(device, MPL115A2_I2C_ADDR).unwrap();

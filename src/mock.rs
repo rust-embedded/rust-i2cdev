@@ -15,6 +15,12 @@ pub struct I2CRegisterMap {
     offset: usize,
 }
 
+impl Default for I2CRegisterMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl I2CRegisterMap {
     pub fn new() -> I2CRegisterMap {
         I2CRegisterMap {
@@ -25,19 +31,14 @@ impl I2CRegisterMap {
 
     pub fn write_regs(&mut self, offset: usize, data: &[u8]) {
         println!("WRITE | 0x{:X} : {:?}", offset, data);
-        for i in 0..data.len() {
-            self.registers[offset + i] = data[i];
-        }
+        self.registers[offset..(data.len() + offset)].clone_from_slice(&data);
     }
 }
 
 impl I2CRegisterMap {
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> I2CResult<()> {
-        for i in 0..data.len() {
-            data[i] = self.registers[self.offset];
-            self.offset += 1;
-        }
+        data.clone_from_slice(&self.registers[self.offset..(self.offset + data.len())]);
         println!("READ  | 0x{:X} : {:?}", self.offset - data.len(), data);
         Ok(())
     }
@@ -54,6 +55,7 @@ impl I2CRegisterMap {
     }
 }
 
+#[derive(Default)]
 pub struct MockI2CDevice {
     pub regmap: I2CRegisterMap,
 }

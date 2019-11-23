@@ -34,6 +34,9 @@ Options:
 
 const ADDR: u16 = 0x20;
 
+#[cfg(not(any(target_os = "linux", target_os = "android")))]
+fn main() {}
+
 #[cfg(any(target_os = "linux", target_os = "android"))]
 fn main() {
     let args = Docopt::new(USAGE)
