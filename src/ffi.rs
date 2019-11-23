@@ -14,41 +14,22 @@ use std::mem;
 use std::ptr;
 use std::io::Cursor;
 use std::os::unix::prelude::*;
+use std::marker::PhantomData;
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
+use libc::c_int;
 
 pub type I2CError = nix::Error;
 
-bitflags! {
-    struct I2CMsgFlags: u16 {
-        /// this is a ten bit chip address
-        const I2C_M_TEN = 0x0010;
-        /// read data, from slave to master
-        const I2C_M_RD = 0x0001;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_STOP = 0x8000;
-        /// if I2C_FUNC_NOSTART
-        const I2C_M_NOSTART = 0x4000;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_REV_DIR_ADDR = 0x2000;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_IGNORE_NAK = 0x1000;
-        /// if I2C_FUNC_PROTOCOL_MANGLING
-        const I2C_M_NO_RD_ACK = 0x0800;
-        /// length will be first received byte
-        const I2C_M_RECV_LEN = 0x0400;
-    }
-}
-
 #[repr(C)]
-struct i2c_msg {
+pub struct i2c_msg {
     /// slave address
-    addr: u16,
+    pub(crate) addr: u16,
     /// serialized I2CMsgFlags
-    flags: u16,
+    pub(crate) flags: u16,
     /// msg length
-    len: u16,
+    pub(crate) len: u16,
     /// pointer to msg data
-    buf: *mut u8,
+    pub(crate) buf: *const u8,
 }
 
 bitflags! {
@@ -163,8 +144,9 @@ pub struct i2c_smbus_ioctl_data {
 }
 
 /// This is the structure as used in the I2C_RDWR ioctl call
+// see linux/i2c-dev.h
 #[repr(C)]
-struct i2c_rdwr_ioctl_data {
+pub struct i2c_rdwr_ioctl_data {
     // struct i2c_msg __user *msgs;
     msgs: *mut i2c_msg,
     // __u32 nmsgs;
@@ -172,13 +154,14 @@ struct i2c_rdwr_ioctl_data {
 }
 
 mod ioctl {
-    use super::{I2C_SLAVE, I2C_SMBUS};
+    use super::{I2C_SLAVE, I2C_SMBUS, I2C_RDWR};
     pub use super::i2c_smbus_ioctl_data;
+    pub use super::i2c_rdwr_ioctl_data;
 
     ioctl_write_int_bad!(set_i2c_slave_address, I2C_SLAVE);
     ioctl_write_ptr_bad!(i2c_smbus, I2C_SMBUS, i2c_smbus_ioctl_data);
+    ioctl_write_ptr_bad!(i2c_rdwr, I2C_RDWR, i2c_rdwr_ioctl_data);
 }
-
 
 pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
     unsafe {
@@ -428,4 +411,18 @@ pub fn i2c_smbus_process_call_block(fd: RawFd, register: u8, values: &[u8]) -> R
     // 1 and ending after count bytes after that
     let count = data.block[0];
     Ok((&data.block[1..(count + 1) as usize]).to_vec())
+}
+
+#[inline]
+pub fn i2c_rdwr(fd: RawFd, values: &mut [i2c_msg]) -> Result<u32, I2CError> {
+    let i2c_data = i2c_rdwr_ioctl_data {
+        msgs: values.as_mut_ptr(),
+        nmsgs: values.len() as u32,
+    };
+
+    let n;
+    unsafe {
+        n = ioctl::i2c_rdwr(fd, &i2c_data)?;
+    }
+    Ok(n as u32)
 }

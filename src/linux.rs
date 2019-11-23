@@ -7,7 +7,7 @@
 // except according to those terms.
 
 use ffi;
-use core::I2CDevice;
+use core::{I2CDevice, I2CTransfer};
 use std::error::Error;
 use std::path::Path;
 use std::fs::File;
@@ -18,9 +18,16 @@ use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
 
+// Expose these core structs from this module
+pub use core::I2CMessage;
+
 pub struct LinuxI2CDevice {
     devfile: File,
     slave_address: u16,
+}
+
+pub struct LinuxI2CBus {
+    devfile: File,
 }
 
 #[derive(Debug)]
@@ -83,6 +90,12 @@ impl Error for LinuxI2CError {
 }
 
 impl AsRawFd for LinuxI2CDevice {
+    fn as_raw_fd(&self) -> RawFd {
+        self.devfile.as_raw_fd()
+    }
+}
+
+impl AsRawFd for LinuxI2CBus {
     fn as_raw_fd(&self) -> RawFd {
         self.devfile.as_raw_fd()
     }
@@ -219,5 +232,112 @@ impl I2CDevice for LinuxI2CDevice {
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, LinuxI2CError> {
         ffi::i2c_smbus_process_call_block(self.as_raw_fd(), register, values).map_err(From::from)
+    }
+}
+
+impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
+    type Error = LinuxI2CError;
+    type Message = LinuxI2CMessage<'a>;
+
+    /// Issue the provided sequence of I2C transactions
+    fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+        for msg in messages.iter_mut() {
+            (*msg).addr = self.slave_address;
+        }
+        ffi::i2c_rdwr(self.as_raw_fd(), messages).map_err(From::from)
+    }
+}
+
+
+impl LinuxI2CBus {
+    /// Create a new LinuxI2CBus for the specified path
+    pub fn new<P: AsRef<Path>>(path: P)
+                               -> Result<LinuxI2CBus, LinuxI2CError> {
+        let file = OpenOptions::new()
+                            .read(true)
+                            .write(true)
+                            .open(path)?;
+        let bus = LinuxI2CBus {
+            devfile: file,
+        };
+        Ok(bus)
+    }
+}
+
+/// Linux I2C message
+pub type LinuxI2CMessage<'a> = ffi::i2c_msg;
+
+impl<'a> I2CTransfer<'a> for LinuxI2CBus {
+    type Error = LinuxI2CError;
+    type Message = LinuxI2CMessage<'a>;
+
+    /// Issue the provided sequence of I2C transactions
+    fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+        ffi::i2c_rdwr(self.as_raw_fd(), msgs).map_err(From::from)
+    }
+}
+
+bitflags! {
+    /// Various flags used by the i2c_rdwr ioctl on Linux. For details, see
+    /// https://www.kernel.org/doc/Documentation/i2c/i2c-protocol
+    ///
+    /// In general, these are for special cases and should not be needed
+    pub struct I2CMessageFlags: u16 {
+        /// Use ten bit addressing on this message
+        const TEN_BIT_ADDRESS = 0x0010;
+        /// Read data, from slave to master
+        const READ = 0x0001;
+        /// Force an I2C stop condition on this message
+        const STOP = 0x8000;
+        /// Avoid sending an I2C start condition on this message
+        const NO_START = 0x4000;
+        /// If you need to invert a 'read' command bit to a 'write'
+        const INVERT_COMMAND = 0x2000;
+        /// Force this message to ignore I2C negative acknowlegements
+        const IGNORE_NACK = 0x1000;
+        /// Force message to ignore acknowledgement
+        const IGNORE_ACK = 0x0800;
+        /// Allow the client to specify how many bytes it will send
+        const USE_RECEIVE_LENGTH = 0x0400;
+    }
+}
+
+impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
+    fn read(data: &'a mut [u8]) -> LinuxI2CMessage {
+        Self {
+            addr: 0, // will be filled later
+            flags: I2CMessageFlags::READ.bits(),
+            len: data.len() as u16,
+            buf: data.as_ptr(),
+        }
+    }
+
+    fn write(data: &'a [u8]) -> LinuxI2CMessage {
+        Self {
+            addr: 0, // will be filled later
+            flags: I2CMessageFlags::empty().bits(),
+            len: data.len() as u16,
+            buf: data.as_ptr(),
+        }
+    }
+}
+
+impl<'a> LinuxI2CMessage<'a> {
+    pub fn with_address(self, slave_address: u16) -> Self {
+        Self {
+            addr: slave_address,
+            flags: self.flags,
+            len: self.len,
+            buf: self.buf,
+        }
+    }
+
+    pub fn with_flags(self, flags: I2CMessageFlags) -> Self {
+        Self {
+            addr: self.addr,
+            flags: flags.bits(),
+            len: self.len,
+            buf: self.buf,
+        }
     }
 }

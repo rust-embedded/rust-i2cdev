@@ -111,3 +111,33 @@ pub trait I2CDevice {
     /// 1 to 31 bytes of data from it.
     fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, Self::Error>;
 }
+
+/// Interface to an I2C Bus from an I2C Master
+///
+/// This is used when the client wants to interact directly with the bus
+/// without specifying an I2C slave address up-front, either because it needs
+/// to communicate with multiple addresses without creatings separate
+/// I2CDevice objects, or because it wants to make used of the I2C_RDWR ioctl
+/// which allows the client to send and transmit multiple sets I2C data in a
+/// single operation, potentially to different I2C slave addresses.
+///
+/// Typical implementations will store state with references to the bus
+/// in use.  The trait is based on the Linux i2cdev interface.
+pub trait I2CTransfer<'a> {
+    type Error: Error;
+    type Message: I2CMessage<'a>;
+
+    // Performs multiple serially chained I2C read/write transactions.  On
+    // success the return code is the number of successfully executed
+    // transactions
+    fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, Self::Error>;
+}
+
+/// Read/Write I2C message
+pub trait I2CMessage<'a> {
+    /// Read data from device
+    fn read(data: &'a mut [u8]) -> Self;
+
+    /// Write data to device
+    fn write(data: &'a [u8]) -> Self;
+}

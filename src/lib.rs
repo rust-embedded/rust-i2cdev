@@ -14,7 +14,7 @@
 //! https://www.kernel.org/doc/Documentation/i2c/dev-interface
 //! ```rust,no_run
 //! extern crate i2cdev;
-//! 
+//!
 //! use std::thread;
 //! use std::time::Duration;
 //!
@@ -22,7 +22,7 @@
 //! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
 //!
 //! const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
-//! 
+//!
 //! // real code should probably not use unwrap()
 //! fn i2cfun() -> Result<(), LinuxI2CError> {
 //!     let mut dev = LinuxI2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR)?;
@@ -39,6 +39,58 @@
 //!         dev.read(&mut buf).unwrap();
 //!         println!("Reading: {:?}", buf);
 //!     }
+//! }
+//! ```
+//!
+//! ```rust,no_run
+//! extern crate i2cdev;
+//!
+//! use std::thread;
+//! use std::time::Duration;
+//!
+//! use i2cdev::core::*;
+//! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError, LinuxI2CMessage};
+//!
+//! const SLAVE_ADDR: u16 = 0x57;
+//!
+//! fn write_read_transaction() -> Result<(), LinuxI2CError> {
+//!     let mut dev = LinuxI2CDevice::new("/dev/i2c-1", SLAVE_ADDR)?;
+//!
+//!     let mut read_data = [0; 2];
+//!     let mut msgs = [
+//!         LinuxI2CMessage::write(&[0x01]),
+//!         LinuxI2CMessage::read(&mut read_data)
+//!     ];
+//!     dev.transfer(&mut msgs)?;
+//!
+//!     println!("Reading: {:?}", read_data);
+//!     Ok(())
+//! }
+//! ```
+//!
+//! ```rust,no_run
+//! extern crate i2cdev;
+//!
+//! use std::thread;
+//! use std::time::Duration;
+//!
+//! use i2cdev::core::*;
+//! use i2cdev::linux::{LinuxI2CBus, LinuxI2CError, LinuxI2CMessage};
+//!
+//! const SLAVE_ADDR: u16 = 0x57;
+//!
+//! fn write_read_transaction_using_bus() -> Result<(), LinuxI2CError> {
+//!     let mut dev = LinuxI2CBus::new("/dev/i2c-1")?;
+//!
+//!     let mut read_data = [0; 2];
+//!     let mut msgs = [
+//!         LinuxI2CMessage::write(&[0x01]).with_address(SLAVE_ADDR),
+//!         LinuxI2CMessage::read(&mut read_data).with_address(SLAVE_ADDR)
+//!     ];
+//!     dev.transfer(&mut msgs)?;
+//!
+//!     println!("Reading: {:?}", read_data);
+//!     Ok(())
 //! }
 //! ```
 
