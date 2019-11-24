@@ -58,10 +58,11 @@ pub struct MockI2CDevice {
     pub regmap: I2CRegisterMap,
 }
 
-
 impl MockI2CDevice {
     pub fn new() -> MockI2CDevice {
-        MockI2CDevice { regmap: I2CRegisterMap::new() }
+        MockI2CDevice {
+            regmap: I2CRegisterMap::new(),
+        }
     }
 }
 
@@ -108,7 +109,7 @@ enum MessageType<'a> {
 }
 
 pub struct MockI2CMessage<'a> {
-    msg_type: MessageType<'a>
+    msg_type: MessageType<'a>,
 }
 
 impl<'a> I2CMessage<'a> for MockI2CMessage<'a> {
@@ -127,7 +128,9 @@ impl<'a> I2CMessage<'a> for MockI2CMessage<'a> {
 }
 
 impl<'a> I2CTransfer<'a> for MockI2CDevice
-where MockI2CDevice: I2CDevice {
+where
+    MockI2CDevice: I2CDevice,
+{
     type Error = io::Error;
     type Message = MockI2CMessage<'a>;
 
@@ -142,4 +145,3 @@ where MockI2CDevice: I2CDevice {
         Ok(messages.len() as u32)
     }
 }
-

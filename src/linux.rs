@@ -6,17 +6,17 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use ffi;
 use core::{I2CDevice, I2CTransfer};
-use std::error::Error;
-use std::path::Path;
-use std::fs::File;
-use std::fmt;
+use ffi;
 use nix;
-use std::io;
+use std::error::Error;
+use std::fmt;
+use std::fs::File;
 use std::fs::OpenOptions;
+use std::io;
 use std::io::prelude::*;
 use std::os::unix::prelude::*;
+use std::path::Path;
 
 // Expose these core structs from this module
 pub use core::I2CMessage;
@@ -52,14 +52,10 @@ impl From<LinuxI2CError> for io::Error {
     fn from(e: LinuxI2CError) -> io::Error {
         match e {
             LinuxI2CError::Io(e) => e,
-            LinuxI2CError::Nix(e) => {
-                match e {
-                    nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
-                    e => {
-                        io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e))
-                    }
-                }
-            }
+            LinuxI2CError::Nix(e) => match e {
+                nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
+                e => io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e)),
+            },
         }
     }
 }
@@ -103,13 +99,11 @@ impl AsRawFd for LinuxI2CBus {
 
 impl LinuxI2CDevice {
     /// Create a new I2CDevice for the specified path
-    pub fn new<P: AsRef<Path>>(path: P,
-                               slave_address: u16)
-                               -> Result<LinuxI2CDevice, LinuxI2CError> {
-        let file = OpenOptions::new()
-                            .read(true)
-                            .write(true)
-                            .open(path)?;
+    pub fn new<P: AsRef<Path>>(
+        path: P,
+        slave_address: u16,
+    ) -> Result<LinuxI2CDevice, LinuxI2CError> {
+        let file = OpenOptions::new().read(true).write(true).open(path)?;
         let mut device = LinuxI2CDevice {
             devfile: file,
             slave_address: 0, // will be set later
@@ -210,7 +204,11 @@ impl I2CDevice for LinuxI2CDevice {
     }
 
     /// Read a block of up to 32 bytes from a device via i2c_smbus_i2c_read_block_data
-    fn smbus_read_i2c_block_data(&mut self, register: u8, len: u8) -> Result<Vec<u8>, LinuxI2CError> {
+    fn smbus_read_i2c_block_data(
+        &mut self,
+        register: u8,
+        len: u8,
+    ) -> Result<Vec<u8>, LinuxI2CError> {
         ffi::i2c_smbus_read_i2c_block_data(self.as_raw_fd(), register, len).map_err(From::from)
     }
 
@@ -224,13 +222,21 @@ impl I2CDevice for LinuxI2CDevice {
     }
 
     /// Write a block of up to 32 bytes from a device via i2c_smbus_i2c_write_block_data
-    fn smbus_write_i2c_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), LinuxI2CError> {
+    fn smbus_write_i2c_block_data(
+        &mut self,
+        register: u8,
+        values: &[u8],
+    ) -> Result<(), LinuxI2CError> {
         ffi::i2c_smbus_write_i2c_block_data(self.as_raw_fd(), register, values).map_err(From::from)
     }
 
     /// Select a register, send 1 to 31 bytes of data to it, and reads
     /// 1 to 31 bytes of data from it.
-    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, LinuxI2CError> {
+    fn smbus_process_block(
+        &mut self,
+        register: u8,
+        values: &[u8],
+    ) -> Result<Vec<u8>, LinuxI2CError> {
         ffi::i2c_smbus_process_call_block(self.as_raw_fd(), register, values).map_err(From::from)
     }
 }
@@ -248,18 +254,11 @@ impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
     }
 }
 
-
 impl LinuxI2CBus {
     /// Create a new LinuxI2CBus for the specified path
-    pub fn new<P: AsRef<Path>>(path: P)
-                               -> Result<LinuxI2CBus, LinuxI2CError> {
-        let file = OpenOptions::new()
-                            .read(true)
-                            .write(true)
-                            .open(path)?;
-        let bus = LinuxI2CBus {
-            devfile: file,
-        };
+    pub fn new<P: AsRef<Path>>(path: P) -> Result<LinuxI2CBus, LinuxI2CError> {
+        let file = OpenOptions::new().read(true).write(true).open(path)?;
+        let bus = LinuxI2CBus { devfile: file };
         Ok(bus)
     }
 }

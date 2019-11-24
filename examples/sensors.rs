@@ -17,13 +17,13 @@ extern crate byteorder;
 extern crate docopt;
 extern crate i2cdev;
 
+use docopt::Docopt;
+use sensors::adxl345_accelerometer::*;
+use sensors::mpl115a2_barometer::*;
+use sensors::{Accelerometer, Barometer, Thermometer};
+use std::env::args;
 use std::thread;
 use std::time::Duration;
-use std::env::args;
-use docopt::Docopt;
-use sensors::{Accelerometer, Barometer, Thermometer};
-use sensors::mpl115a2_barometer::*;
-use sensors::adxl345_accelerometer::*;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::*;
@@ -101,8 +101,8 @@ mod sensors {
 
     pub mod adxl345_accelerometer {
         use super::*;
-        use i2cdev::core::I2CDevice;
         use byteorder::{ByteOrder, LittleEndian};
+        use i2cdev::core::I2CDevice;
 
         // TODO: read/write data format (for now, assumed 0x00)
 
@@ -173,12 +173,8 @@ mod sensors {
                 i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00)?;
 
                 // configure some defaults
-                try!(
-                    i2cdev.smbus_write_byte_data(
-                        REGISTER_BW_RATE,
-                        ADXL345DataRate::RATE_1600HZ as u8
-                    )
-                );
+                try!(i2cdev
+                    .smbus_write_byte_data(REGISTER_BW_RATE, ADXL345DataRate::RATE_1600HZ as u8));
                 i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08)?;
                 i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD)?;
                 i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03)?;
@@ -226,11 +222,11 @@ mod sensors {
 
     pub mod mpl115a2_barometer {
         use super::*;
+        use byteorder::{BigEndian, ByteOrder};
+        use i2cdev::core::I2CDevice;
+        use std::error::Error;
         use std::thread;
         use std::time::Duration;
-        use std::error::Error;
-        use i2cdev::core::I2CDevice;
-        use byteorder::{BigEndian, ByteOrder};
 
         pub const MPL115A2_I2C_ADDR: u16 = 0x60; // appears to always be this
 
@@ -398,13 +394,13 @@ mod sensors {
 
         #[cfg(test)]
         mod tests {
-            use super::*;
             use super::calc_coefficient;
-            use sensors::*;
+            use super::*;
             use mock::MockI2CDevice;
+            use sensors::*;
 
             macro_rules! assert_almost_eq {
-                ($left:expr, $right:expr) => ({
+                ($left:expr, $right:expr) => {{
                     match (&($left), &($right)) {
                         (left_val, right_val) => {
                             if (*left_val - *right_val).abs() > 0.0001 {
@@ -412,15 +408,17 @@ mod sensors {
                             }
                         }
                     }
-                })
+                }};
             }
 
             fn make_dev(mut i2cdev: MockI2CDevice) -> MPL115A2BarometerThermometer<MockI2CDevice> {
                 (&mut i2cdev.regmap).write_regs(
                     0x04,
                     &[
-                        74, 98 /* A0 */, 165, 150 /* B1 */, 182, 106 /* B2 */, 63,
-                        232,
+                        74, 98, /* A0 */
+                        165, 150, /* B1 */
+                        182, 106, /* B2 */
+                        63, 232,
                     ],
                 ); // C12
                 MPL115A2BarometerThermometer::new(i2cdev).unwrap()
@@ -455,7 +453,6 @@ mod sensors {
                 let mut dev = make_dev(i2cdev);
                 assert_almost_eq!(dev.temperature_celsius().unwrap(), 21.448599);
             }
-
         }
     }
 }

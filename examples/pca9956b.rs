@@ -6,16 +6,16 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.extern crate i2cdev;
 
-extern crate i2cdev;
 extern crate docopt;
+extern crate i2cdev;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use i2cdev::core::{I2CTransfer, I2CMessage};
+use i2cdev::core::{I2CMessage, I2CTransfer};
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::{LinuxI2CBus, LinuxI2CMessage};
 
-use std::env::args;
 use docopt::Docopt;
+use std::env::args;
 
 const USAGE: &str = "
 Reads registers from a PCA9956B IC via Linux i2cdev.
