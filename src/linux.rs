@@ -77,7 +77,7 @@ impl Error for LinuxI2CError {
         }
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         match *self {
             LinuxI2CError::Io(ref e) => Some(e),
             LinuxI2CError::Nix(ref e) => Some(e),

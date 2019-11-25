@@ -42,7 +42,7 @@ pub trait I2CDevice {
     /// This is the opposite operation as smbus_read_byte.  As with read_byte,
     /// no register is specified.
     fn smbus_write_byte(&mut self, value: u8) -> Result<(), Self::Error> {
-        self.write(&mut [value])
+        self.write(&[value])
     }
 
     /// Read a single byte from a device, from a designated register
@@ -57,7 +57,7 @@ pub trait I2CDevice {
     ///
     /// The register is specified through the Comm byte.
     fn smbus_write_byte_data(&mut self, register: u8, value: u8) -> Result<(), Self::Error> {
-        self.write(&mut [register, value])
+        self.write(&[register, value])
     }
 
     /// Read 2 bytes from a given register on a device (lsb first)

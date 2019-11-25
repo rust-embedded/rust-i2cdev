@@ -53,7 +53,7 @@ mod nunchuck {
             }
         }
 
-        fn cause(&self) -> Option<&Error> {
+        fn cause(&self) -> Option<&dyn Error> {
             match *self {
                 NunchuckError::Error(ref e) => Some(e),
                 NunchuckError::ParseError => None,
@@ -82,9 +82,9 @@ mod nunchuck {
                 Some(NunchuckReading {
                     joystick_x: data[0],
                     joystick_y: data[1],
-                    accel_x: (data[2] as u16) << 2 | ((data[5] as u16 >> 6) & 0b11),
-                    accel_y: (data[3] as u16) << 2 | ((data[5] as u16 >> 4) & 0b11),
-                    accel_z: (data[4] as u16) << 2 | ((data[5] as u16 >> 2) & 0b11),
+                    accel_x: (u16::from(data[2]) << 2) | ((u16::from(data[5]) >> 6) & 0b11),
+                    accel_y: (u16::from(data[3]) << 2) | ((u16::from(data[5]) >> 4) & 0b11),
+                    accel_z: (u16::from(data[4]) << 2) | ((u16::from(data[5]) >> 2) & 0b11),
                     c_button_pressed: (data[5] & 0b10) == 0,
                     z_button_pressed: (data[5] & 0b01) == 0,
                 })
@@ -106,7 +106,7 @@ mod nunchuck {
         /// send the required init sequence in order to read data in
         /// the future.
         pub fn new(i2cdev: T) -> Result<Nunchuck<T>, T::Error> {
-            let mut nunchuck = Nunchuck { i2cdev: i2cdev };
+            let mut nunchuck = Nunchuck { i2cdev };
             nunchuck.init()?;
             Ok(nunchuck)
         }
@@ -122,8 +122,7 @@ mod nunchuck {
             // lacking but it appears this is some kind of handshake to
             // perform unencrypted data tranfers
             self.i2cdev.smbus_write_byte_data(0xF0, 0x55)?;
-            self.i2cdev.smbus_write_byte_data(0xFB, 0x00)?;
-            Ok(())
+            self.i2cdev.smbus_write_byte_data(0xFB, 0x00)
         }
 
         pub fn read(&mut self) -> Result<NunchuckReading, NunchuckError<T::Error>> {
@@ -198,7 +197,7 @@ use nunchuck::*;
 use docopt::Docopt;
 use std::env::args;
 
-const USAGE: &'static str = "
+const USAGE: &str = "
 Reading Wii Nunchuck data via Linux i2cdev.
 
 Usage:
@@ -217,7 +216,7 @@ fn main() {}
 #[cfg(any(target_os = "linux", target_os = "android"))]
 fn main() {
     let args = Docopt::new(USAGE)
-        .and_then(|d| d.argv(args().into_iter()).parse())
+        .and_then(|d| d.argv(args()).parse())
         .unwrap_or_else(|e| e.exit());
     let device = args.get_str("<device>");
     let i2cdev = LinuxI2CDevice::new(device, NUNCHUCK_SLAVE_ADDR).unwrap();

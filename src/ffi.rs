@@ -10,10 +10,8 @@
 #![allow(non_camel_case_types)]
 
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use libc::c_int;
 use nix;
 use std::io::Cursor;
-use std::marker::PhantomData;
 use std::mem;
 use std::os::unix::prelude::*;
 use std::ptr;
@@ -34,24 +32,24 @@ pub struct i2c_msg {
 
 bitflags! {
     struct I2CFunctions: u32 {
-        const I2C_FUNC_I2C = 0x00000001;
-        const I2C_FUNC_10BIT_ADDR = 0x00000002;
-        const I2C_FUNC_PROTOCOL_MANGLING = 0x00000004; /* I2C_M_IGNORE_NAK etc. */
-        const I2C_FUNC_SMBUS_PEC = 0x00000008;
-        const I2C_FUNC_NOSTART = 0x00000010; /* I2C_M_NOSTART */
-        const I2C_FUNC_SMBUS_BLOCK_PROC_CALL = 0x00008000; /* SMBus 2.0 */
-        const I2C_FUNC_SMBUS_QUICK = 0x00010000;
-        const I2C_FUNC_SMBUS_READ_BYTE = 0x00020000;
-        const I2C_FUNC_SMBUS_WRITE_BYTE = 0x00040000;
-        const I2C_FUNC_SMBUS_READ_BYTE_DATA = 0x00080000;
-        const I2C_FUNC_SMBUS_WRITE_BYTE_DATA = 0x00100000;
-        const I2C_FUNC_SMBUS_READ_WORD_DATA = 0x00200000;
-        const I2C_FUNC_SMBUS_WRITE_WORD_DATA = 0x00400000;
-        const I2C_FUNC_SMBUS_PROC_CALL = 0x00800000;
-        const I2C_FUNC_SMBUS_READ_BLOCK_DATA = 0x01000000;
-        const I2C_FUNC_SMBUS_WRITE_BLOCK_DATA  = 0x02000000;
-        const I2C_FUNC_SMBUS_READ_I2C_BLOCK = 0x04000000; /* I2C-like block xfer  */
-        const I2C_FUNC_SMBUS_WRITE_I2C_BLOCK = 0x08000000; /* w/ 1-byte reg. addr. */
+        const I2C_FUNC_I2C = 0x0000_0001;
+        const I2C_FUNC_10BIT_ADDR = 0x0000_0002;
+        const I2C_FUNC_PROTOCOL_MANGLING = 0x0000_0004; /* I2C_M_IGNORE_NAK etc. */
+        const I2C_FUNC_SMBUS_PEC = 0x0000_0008;
+        const I2C_FUNC_NOSTART = 0x0000_0010; /* I2C_M_NOSTART */
+        const I2C_FUNC_SMBUS_BLOCK_PROC_CALL = 0x0000_8000; /* SMBus 2.0 */
+        const I2C_FUNC_SMBUS_QUICK = 0x0001_0000;
+        const I2C_FUNC_SMBUS_READ_BYTE = 0x0002_0000;
+        const I2C_FUNC_SMBUS_WRITE_BYTE = 0x0004_0000;
+        const I2C_FUNC_SMBUS_READ_BYTE_DATA = 0x0008_0000;
+        const I2C_FUNC_SMBUS_WRITE_BYTE_DATA = 0x0010_0000;
+        const I2C_FUNC_SMBUS_READ_WORD_DATA = 0x0020_0000;
+        const I2C_FUNC_SMBUS_WRITE_WORD_DATA = 0x0040_0000;
+        const I2C_FUNC_SMBUS_PROC_CALL = 0x0080_0000;
+        const I2C_FUNC_SMBUS_READ_BLOCK_DATA = 0x0100_0000;
+        const I2C_FUNC_SMBUS_WRITE_BLOCK_DATA  = 0x0200_0000;
+        const I2C_FUNC_SMBUS_READ_I2C_BLOCK = 0x0400_0000; /* I2C-like block xfer  */
+        const I2C_FUNC_SMBUS_WRITE_I2C_BLOCK = 0x0800_0000; /* w/ 1-byte reg. addr. */
 
         const I2C_FUNC_SMBUS_BYTE = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE.bits |
                                      I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE.bits);
@@ -164,7 +162,7 @@ mod ioctl {
 
 pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
     unsafe {
-        ioctl::set_i2c_slave_address(fd, slave_address as i32)?;
+        ioctl::set_i2c_slave_address(fd, i32::from(slave_address))?;
     }
     Ok(())
 }
@@ -178,9 +176,9 @@ unsafe fn i2c_smbus_access(
 ) -> Result<(), I2CError> {
     let mut args = i2c_smbus_ioctl_data {
         read_write: read_write as u8,
-        command: command,
+        command,
         size: size as u32,
-        data: data,
+        data,
     };
 
     // remove type information
@@ -189,9 +187,10 @@ unsafe fn i2c_smbus_access(
 
 #[inline]
 pub fn i2c_smbus_write_quick(fd: RawFd, bit: bool) -> Result<(), I2CError> {
-    let read_write = match bit {
-        true => I2CSMBusReadWrite::I2C_SMBUS_READ,
-        false => I2CSMBusReadWrite::I2C_SMBUS_WRITE,
+    let read_write = if bit {
+        I2CSMBusReadWrite::I2C_SMBUS_READ
+    } else {
+        I2CSMBusReadWrite::I2C_SMBUS_WRITE
     };
     unsafe {
         i2c_smbus_access(
@@ -258,9 +257,8 @@ pub fn i2c_smbus_write_byte_data(fd: RawFd, register: u8, value: u8) -> Result<(
             register,
             I2CSMBusSize::I2C_SMBUS_BYTE_DATA,
             &mut data,
-        )?;
+        )
     }
-    Ok(())
 }
 
 #[inline]
@@ -295,9 +293,8 @@ pub fn i2c_smbus_write_word_data(fd: RawFd, register: u8, value: u16) -> Result<
             register,
             I2CSMBusSize::I2C_SMBUS_WORD_DATA,
             &mut data,
-        )?;
-    };
-    Ok(())
+        )
+    }
 }
 
 #[inline]
@@ -364,13 +361,21 @@ pub fn i2c_smbus_read_i2c_block_data(
 }
 
 #[inline]
-pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), I2CError> {
+fn copy_to_i2c_block_data(values: &[u8], max_size: usize) -> i2c_smbus_data {
     let mut data = i2c_smbus_data::empty();
-    let len: usize = if values.len() > 32 { 32 } else { values.len() };
+    let len: usize = if values.len() > max_size {
+        max_size
+    } else {
+        values.len()
+    };
     data.block[0] = len as u8;
-    for i in 1..(len + 1) {
-        data.block[i] = values[i - 1];
-    }
+    data.block[1..=len].copy_from_slice(&values[..len]);
+    data
+}
+
+#[inline]
+pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), I2CError> {
+    let mut data = copy_to_i2c_block_data(&values, 32);
     unsafe {
         i2c_smbus_access(
             fd,
@@ -378,9 +383,8 @@ pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Res
             register,
             I2CSMBusSize::I2C_SMBUS_BLOCK_DATA,
             &mut data,
-        )?;
+        )
     }
-    Ok(())
 }
 
 #[inline]
@@ -389,12 +393,7 @@ pub fn i2c_smbus_write_i2c_block_data(
     register: u8,
     values: &[u8],
 ) -> Result<(), I2CError> {
-    let mut data = i2c_smbus_data::empty();
-    let len: usize = if values.len() > 32 { 32 } else { values.len() };
-    data.block[0] = len as u8;
-    for i in 1..(len + 1) {
-        data.block[i] = values[i - 1];
-    }
+    let mut data = copy_to_i2c_block_data(&values, 32);
     unsafe {
         i2c_smbus_access(
             fd,
@@ -402,9 +401,8 @@ pub fn i2c_smbus_write_i2c_block_data(
             register,
             I2CSMBusSize::I2C_SMBUS_I2C_BLOCK_DATA,
             &mut data,
-        )?;
+        )
     }
-    Ok(())
 }
 
 #[inline]
@@ -413,12 +411,7 @@ pub fn i2c_smbus_process_call_block(
     register: u8,
     values: &[u8],
 ) -> Result<Vec<u8>, I2CError> {
-    let mut data = i2c_smbus_data::empty();
-    let len: usize = if values.len() > 31 { 31 } else { values.len() };
-    data.block[0] = len as u8;
-    for i in 1..(len + 1) {
-        data.block[i] = values[i - 1];
-    }
+    let mut data = copy_to_i2c_block_data(&values, 31);
     unsafe {
         i2c_smbus_access(
             fd,
