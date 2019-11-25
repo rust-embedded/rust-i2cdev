@@ -20,5 +20,5 @@ byteorder = "1"
 nix = "0.14"
 
 [dev-dependencies]
-docopt = "0.8"
+docopt = "1"
 
