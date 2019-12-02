@@ -38,7 +38,8 @@ impl I2CRegisterMap {
 impl I2CRegisterMap {
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> I2CResult<()> {
-        data.clone_from_slice(&self.registers[self.offset..(self.offset + data.len())]);
+        let len = data.len();
+        data.clone_from_slice(&self.registers[self.offset..(self.offset + len)]);
         println!("READ  | 0x{:X} : {:?}", self.offset - data.len(), data);
         Ok(())
     }
