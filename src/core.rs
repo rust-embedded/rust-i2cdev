@@ -15,6 +15,7 @@ use std::error::Error;
 /// in use and the address of the slave device.  The trait is based on the
 /// Linux i2cdev interface.
 pub trait I2CDevice {
+    /// Error type
     type Error: Error;
 
     /// Read data from the device to fill the provided slice
@@ -128,12 +129,14 @@ pub trait I2CDevice {
 /// Typical implementations will store state with references to the bus
 /// in use.  The trait is based on the Linux i2cdev interface.
 pub trait I2CTransfer<'a> {
+    /// I2C transfer error type
     type Error: Error;
+    /// I2C transfer message type
     type Message: I2CMessage<'a>;
 
-    // Performs multiple serially chained I2C read/write transactions.  On
-    // success the return code is the number of successfully executed
-    // transactions
+    /// Performs multiple serially chained I2C read/write transactions.  On
+    /// success the return code is the number of successfully executed
+    /// transactions
     fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, Self::Error>;
 }
 

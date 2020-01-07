@@ -107,8 +107,12 @@ extern crate nix;
 #[cfg(any(target_os = "linux", target_os = "android"))]
 mod ffi;
 
+/// Core I2C abstractions
 pub mod core;
 
+/// Linux I2C device support
 #[cfg(any(target_os = "linux", target_os = "android"))]
 pub mod linux;
+
+/// Mock I2C device
 pub mod mock;

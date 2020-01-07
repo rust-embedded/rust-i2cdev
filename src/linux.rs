@@ -21,18 +21,23 @@ use std::path::Path;
 // Expose these core structs from this module
 pub use core::I2CMessage;
 
+/// Concrete linux I2C device
 pub struct LinuxI2CDevice {
     devfile: File,
     slave_address: u16,
 }
 
+/// Linux I2C bus
 pub struct LinuxI2CBus {
     devfile: File,
 }
 
+/// Linux I2C errors
 #[derive(Debug)]
 pub enum LinuxI2CError {
+    /// OS error
     Nix(nix::Error),
+    /// Input/output error
     Io(io::Error),
 }
 
@@ -322,6 +327,7 @@ impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
 }
 
 impl<'a> LinuxI2CMessage<'a> {
+    /// Set the target device address for the message
     pub fn with_address(self, slave_address: u16) -> Self {
         Self {
             addr: slave_address,
@@ -331,6 +337,7 @@ impl<'a> LinuxI2CMessage<'a> {
         }
     }
 
+    /// Set optional message flags
     pub fn with_flags(self, flags: I2CMessageFlags) -> Self {
         Self {
             addr: self.addr,

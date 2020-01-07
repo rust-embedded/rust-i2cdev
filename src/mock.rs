@@ -8,8 +8,10 @@
 use core::{I2CDevice, I2CMessage, I2CTransfer};
 use std::io;
 
+/// I2C mock result type
 pub type I2CResult<T> = io::Result<T>;
 
+/// Mock I2C device register map
 pub struct I2CRegisterMap {
     registers: [u8; 0xFF],
     offset: usize,
@@ -22,6 +24,7 @@ impl Default for I2CRegisterMap {
 }
 
 impl I2CRegisterMap {
+    /// Create new mock I2C register map
     pub fn new() -> I2CRegisterMap {
         I2CRegisterMap {
             registers: [0x00; 0xFF],
@@ -29,6 +32,7 @@ impl I2CRegisterMap {
         }
     }
 
+    /// Set several registers starting at the given offset
     pub fn write_regs(&mut self, offset: usize, data: &[u8]) {
         println!("WRITE | 0x{:X} : {:?}", offset, data);
         self.registers[offset..(data.len() + offset)].clone_from_slice(&data);
@@ -56,12 +60,15 @@ impl I2CRegisterMap {
     }
 }
 
+/// Mock I2C device exposing a register map
 #[derive(Default)]
 pub struct MockI2CDevice {
+    /// I2C register map
     pub regmap: I2CRegisterMap,
 }
 
 impl MockI2CDevice {
+    /// Create a new mock I2C device
     pub fn new() -> MockI2CDevice {
         MockI2CDevice {
             regmap: I2CRegisterMap::new(),
@@ -111,6 +118,7 @@ enum MessageType<'a> {
     Read(&'a mut [u8]),
 }
 
+/// Mock I2C message
 pub struct MockI2CMessage<'a> {
     msg_type: MessageType<'a>,
 }
