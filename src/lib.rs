@@ -96,6 +96,7 @@
 
 #![crate_name = "i2cdev"]
 #![crate_type = "lib"]
+#![deny(missing_docs)]
 
 #[macro_use]
 extern crate bitflags;
