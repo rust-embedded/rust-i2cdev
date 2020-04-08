@@ -6,7 +6,7 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use byteorder::{ByteOrder, LittleEndian};
+use byteorder::{BigEndian, ByteOrder};
 use std::error::Error;
 
 /// Interface to an I2C Slave Device from an I2C Master
@@ -66,13 +66,13 @@ pub trait I2CDevice {
         let mut buf: [u8; 2] = [0x00; 2];
         self.smbus_write_byte(register)?;
         self.read(&mut buf)?;
-        Ok(LittleEndian::read_u16(&buf))
+        Ok(BigEndian::read_u16(&buf))
     }
 
     /// Write 2 bytes to a given register on a device (lsb first)
     fn smbus_write_word_data(&mut self, register: u8, value: u16) -> Result<(), Self::Error> {
         let mut buf: [u8; 3] = [register, 0, 0];
-        LittleEndian::write_u16(&mut buf[1..], value);
+        BigEndian::write_u16(&mut buf[1..], value);
         self.write(&buf)
     }
 
@@ -81,7 +81,7 @@ pub trait I2CDevice {
         let mut buf: [u8; 2] = [0x00; 2];
         self.smbus_write_word_data(register, value)?;
         self.read(&mut buf)?;
-        Ok(LittleEndian::read_u16(&buf))
+        Ok(BigEndian::read_u16(&buf))
     }
 
     /// Read a block of up to 32 bytes from a device
