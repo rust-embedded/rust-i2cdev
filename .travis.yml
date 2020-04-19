@@ -2,11 +2,17 @@ language: rust
 sudo: false
 
 os:
-- linux
-- osx
+  - linux
+  - osx
+
+rust:
+  - nightly
+  - stable
+  # MSRV
+  - 1.32.0
 
 script:
-- rustup component add rustfmt
-- cargo build --verbose
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cargo test --verbose; fi
-- cargo fmt -- --check
+  - rustup component add rustfmt
+  - cargo build --verbose
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then cargo test --verbose; fi
+  - cargo fmt -- --check
