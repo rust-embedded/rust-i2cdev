@@ -57,10 +57,7 @@ impl From<LinuxI2CError> for io::Error {
     fn from(e: LinuxI2CError) -> io::Error {
         match e {
             LinuxI2CError::Io(e) => e,
-            LinuxI2CError::Nix(e) => match e {
-                nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
-                e => io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e)),
-            },
+            LinuxI2CError::Nix(e) => e.into(),
         }
     }
 }
