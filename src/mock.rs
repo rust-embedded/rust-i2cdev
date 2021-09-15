@@ -35,7 +35,7 @@ impl I2CRegisterMap {
     /// Set several registers starting at the given offset
     pub fn write_regs(&mut self, offset: usize, data: &[u8]) {
         println!("WRITE | 0x{:X} : {:?}", offset, data);
-        self.registers[offset..(data.len() + offset)].clone_from_slice(&data);
+        self.registers[offset..(data.len() + offset)].clone_from_slice(data);
     }
 }
 

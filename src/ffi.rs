@@ -174,7 +174,7 @@ unsafe fn i2c_smbus_access(
     size: I2CSMBusSize,
     data: *mut i2c_smbus_data,
 ) -> Result<(), I2CError> {
-    let mut args = i2c_smbus_ioctl_data {
+    let args = i2c_smbus_ioctl_data {
         read_write: read_write as u8,
         command,
         size: size as u32,
@@ -182,7 +182,7 @@ unsafe fn i2c_smbus_access(
     };
 
     // remove type information
-    ioctl::i2c_smbus(fd, &mut args).map(drop)
+    ioctl::i2c_smbus(fd, &args).map(drop)
 }
 
 #[inline]
@@ -375,7 +375,7 @@ fn copy_to_i2c_block_data(values: &[u8], max_size: usize) -> i2c_smbus_data {
 
 #[inline]
 pub fn i2c_smbus_write_block_data(fd: RawFd, register: u8, values: &[u8]) -> Result<(), I2CError> {
-    let mut data = copy_to_i2c_block_data(&values, 32);
+    let mut data = copy_to_i2c_block_data(values, 32);
     unsafe {
         i2c_smbus_access(
             fd,
@@ -393,7 +393,7 @@ pub fn i2c_smbus_write_i2c_block_data(
     register: u8,
     values: &[u8],
 ) -> Result<(), I2CError> {
-    let mut data = copy_to_i2c_block_data(&values, 32);
+    let mut data = copy_to_i2c_block_data(values, 32);
     unsafe {
         i2c_smbus_access(
             fd,
@@ -411,7 +411,7 @@ pub fn i2c_smbus_process_call_block(
     register: u8,
     values: &[u8],
 ) -> Result<Vec<u8>, I2CError> {
-    let mut data = copy_to_i2c_block_data(&values, 31);
+    let mut data = copy_to_i2c_block_data(values, 31);
     unsafe {
         i2c_smbus_access(
             fd,
