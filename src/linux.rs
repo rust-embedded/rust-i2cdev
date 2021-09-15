@@ -72,13 +72,6 @@ impl fmt::Display for LinuxI2CError {
 }
 
 impl Error for LinuxI2CError {
-    fn description(&self) -> &str {
-        match *self {
-            LinuxI2CError::Io(ref e) => e.description(),
-            LinuxI2CError::Nix(ref e) => e.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn Error> {
         match *self {
             LinuxI2CError::Io(ref e) => Some(e),

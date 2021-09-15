@@ -40,19 +40,12 @@ mod nunchuck {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 NunchuckError::Error(ref e) => fmt::Display::fmt(e, f),
-                NunchuckError::ParseError => fmt::Display::fmt(self.description(), f),
+                NunchuckError::ParseError => write!(f, "Could not parse data"),
             }
         }
     }
 
     impl<E: Error> Error for NunchuckError<E> {
-        fn description(&self) -> &str {
-            match *self {
-                NunchuckError::Error(ref e) => e.description(),
-                NunchuckError::ParseError => "Unable to Parse Data",
-            }
-        }
-
         fn cause(&self) -> Option<&dyn Error> {
             match *self {
                 NunchuckError::Error(ref e) => Some(e),
