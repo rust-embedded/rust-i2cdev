@@ -8,6 +8,8 @@ repository = "https://github.com/rust-embedded/rust-i2cdev"
 homepage = "https://github.com/rust-embedded/rust-i2cdev"
 documentation = "https://docs.rs/i2cdev"
 readme = "README.md"
+keywords = ["linux"]
+categories = ["embedded", "hardware-support"]
 description = """
 Provides API for safe access to Linux i2c device interface.
 """
