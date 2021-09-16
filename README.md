@@ -1,6 +1,6 @@
 # Rust I2cdev
 
-[![Build Status](https://travis-ci.org/rust-embedded/rust-i2cdev.svg?branch=master)](https://travis-ci.org/rust-embedded/rust-i2cdev)
+[![Build Status](https://github.com/rust-embedded/rust-i2cdev/workflows/CI/badge.svg)](https://github.com/rust-embedded/rust-i2cdev/actions)
 [![Version](https://img.shields.io/crates/v/i2cdev.svg)](https://crates.io/crates/i2cdev)
 [![License](https://img.shields.io/crates/l/i2cdev.svg)](https://github.com/rust-embedded/rust-i2cdev/blob/master/README.md#license)
 
