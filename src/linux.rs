@@ -57,10 +57,7 @@ impl From<LinuxI2CError> for io::Error {
     fn from(e: LinuxI2CError) -> io::Error {
         match e {
             LinuxI2CError::Io(e) => e,
-            LinuxI2CError::Nix(e) => match e {
-                nix::Error::Sys(e) => io::Error::from_raw_os_error(e as i32),
-                e => io::Error::new(io::ErrorKind::InvalidInput, format!("{:?}", e)),
-            },
+            LinuxI2CError::Nix(e) => e.into(),
         }
     }
 }
@@ -75,13 +72,6 @@ impl fmt::Display for LinuxI2CError {
 }
 
 impl Error for LinuxI2CError {
-    fn description(&self) -> &str {
-        match *self {
-            LinuxI2CError::Io(ref e) => e.description(),
-            LinuxI2CError::Nix(ref e) => e.description(),
-        }
-    }
-
     fn cause(&self) -> Option<&dyn Error> {
         match *self {
             LinuxI2CError::Io(ref e) => Some(e),
