@@ -173,8 +173,8 @@ mod sensors {
                 i2cdev.smbus_write_byte_data(REGISTER_POWER_CTL, 0x00)?;
 
                 // configure some defaults
-                try!(i2cdev
-                    .smbus_write_byte_data(REGISTER_BW_RATE, ADXL345DataRate::RATE_1600HZ as u8));
+                i2cdev
+                    .smbus_write_byte_data(REGISTER_BW_RATE, ADXL345DataRate::RATE_1600HZ as u8)?;
                 i2cdev.smbus_write_byte_data(REGISTER_DATA_FORMAT, 0x08)?;
                 i2cdev.smbus_write_byte_data(REGISTER_OFSX, 0xFD)?;
                 i2cdev.smbus_write_byte_data(REGISTER_OFSY, 0x03)?;
