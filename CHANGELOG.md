@@ -8,7 +8,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [v0.5.0] - 2021-09-20
+## [v0.5.0] - 2021-09-21
 
 - Updated `nix` to version `0.22`.
 - Updated `bitflags` to version `1.3`.
