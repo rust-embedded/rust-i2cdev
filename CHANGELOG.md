@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Updated nix to allow both version `0.22` or `0.23`.
+
 ## [v0.5.0] - 2021-09-21
 
 - Updated `nix` to version `0.22`.
