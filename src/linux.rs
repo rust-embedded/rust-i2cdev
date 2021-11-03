@@ -25,6 +25,7 @@ pub use core::I2CMessage;
 pub struct LinuxI2CDevice {
     devfile: File,
     slave_address: u16,
+    pec: bool,
 }
 
 /// Linux I2C bus
@@ -102,8 +103,10 @@ impl LinuxI2CDevice {
         let mut device = LinuxI2CDevice {
             devfile: file,
             slave_address: 0, // will be set later
+            pec: false,
         };
         device.set_slave_address(slave_address)?;
+        device.set_smbus_pec(false)?;
         Ok(device)
     }
 
@@ -121,6 +124,17 @@ impl LinuxI2CDevice {
     pub fn set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
         ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address)?;
         self.slave_address = slave_address;
+        Ok(())
+    }
+
+    /// Enable/Disable PEC support for this device
+    ///
+    /// Used only for SMBus transactions.  This request only has an effect if the
+    /// the adapter has I2C_FUNC_SMBUS_PEC; it is still safe if not, it just
+    /// doesn't have any effect.
+    pub fn set_smbus_pec(&mut self, enable: bool) -> Result<(), LinuxI2CError> {
+        ffi::i2c_set_smbus_pec(self.as_raw_fd(), enable)?;
+        self.pec = enable;
         Ok(())
     }
 }
