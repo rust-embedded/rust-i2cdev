@@ -110,6 +110,27 @@ impl LinuxI2CDevice {
         Ok(device)
     }
 
+    /// Create a new I2CDevice for the specified path, without checking if the
+    /// device is bound to a driver
+    ///
+    /// # Safety
+    /// Using this can seriously confuse the original driver, and may cause all
+    /// future communication to perform the wrong operations and/or return wrong results.
+    pub unsafe fn force_new<P: AsRef<Path>>(
+        path: P,
+        slave_address: u16,
+    ) -> Result<LinuxI2CDevice, LinuxI2CError> {
+        let file = OpenOptions::new().read(true).write(true).open(path)?;
+        let mut device = LinuxI2CDevice {
+            devfile: file,
+            slave_address: 0, // will be set later
+            pec: false,
+        };
+        device.force_set_slave_address(slave_address)?;
+        device.set_smbus_pec(false)?;
+        Ok(device)
+    }
+
     /// Set the slave address for this device
     ///
     /// Typically the address is expected to be 7-bits but 10-bit addresses
@@ -123,6 +144,16 @@ impl LinuxI2CDevice {
     /// not want to create a new device.
     pub fn set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
         ffi::i2c_set_slave_address(self.as_raw_fd(), slave_address)?;
+        self.slave_address = slave_address;
+        Ok(())
+    }
+
+    /// Set the slave address for this device, even if it is already in use
+    /// by a driver
+    ///
+    /// This is private; use `force_new` instead.
+    unsafe fn force_set_slave_address(&mut self, slave_address: u16) -> Result<(), LinuxI2CError> {
+        ffi::i2c_set_slave_address_force(self.as_raw_fd(), slave_address)?;
         self.slave_address = slave_address;
         Ok(())
     }

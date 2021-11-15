@@ -153,9 +153,10 @@ pub struct i2c_rdwr_ioctl_data {
 mod ioctl {
     pub use super::i2c_rdwr_ioctl_data;
     pub use super::i2c_smbus_ioctl_data;
-    use super::{I2C_PEC, I2C_RDWR, I2C_SLAVE, I2C_SMBUS};
+    use super::{I2C_PEC, I2C_RDWR, I2C_SLAVE, I2C_SLAVE_FORCE, I2C_SMBUS};
 
     ioctl_write_int_bad!(set_i2c_slave_address, I2C_SLAVE);
+    ioctl_write_int_bad!(set_i2c_slave_address_force, I2C_SLAVE_FORCE);
     ioctl_write_int_bad!(set_smbus_pec, I2C_PEC);
     ioctl_write_ptr_bad!(i2c_smbus, I2C_SMBUS, i2c_smbus_ioctl_data);
     ioctl_write_ptr_bad!(i2c_rdwr, I2C_RDWR, i2c_rdwr_ioctl_data);
@@ -164,6 +165,13 @@ mod ioctl {
 pub fn i2c_set_slave_address(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
     unsafe {
         ioctl::set_i2c_slave_address(fd, i32::from(slave_address))?;
+    }
+    Ok(())
+}
+
+pub fn i2c_set_slave_address_force(fd: RawFd, slave_address: u16) -> Result<(), nix::Error> {
+    unsafe {
+        ioctl::set_i2c_slave_address_force(fd, i32::from(slave_address))?;
     }
     Ok(())
 }
