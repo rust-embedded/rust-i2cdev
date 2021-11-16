@@ -10,6 +10,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Updated nix to allow both version `0.22` or `0.23`.
 - Add PEC support for SMBus compatible adapters
+- Add `LinuxI2CDevice::force_new()` to open the device without checking if the address is bound to a driver.
 
 ## [v0.5.0] - 2021-09-21
 
