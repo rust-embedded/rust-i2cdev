@@ -8,7 +8,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-- Updated nix to allow both version `0.22` or `0.23`.
+- Updated nix to version `0.23`.
 - Add PEC support for SMBus compatible adapters
 - Add `LinuxI2CDevice::force_new()` to open the device without checking if the address is bound to a driver.
 
@@ -24,4 +24,3 @@ The changelog for previous versions was not recorded.
 
 [Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.0...HEAD
 [v0.5.0]: https://github.com/rust-embedded/rust-i2cdev/compare/0.4.0...0.5.0
-
