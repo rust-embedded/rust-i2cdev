@@ -97,7 +97,6 @@
 #![crate_name = "i2cdev"]
 #![crate_type = "lib"]
 #![deny(missing_docs)]
-#![doc(html_root_url = "https://docs.rs/i2cdev/0.5.0")]
 
 #[macro_use]
 extern crate bitflags;
