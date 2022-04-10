@@ -19,7 +19,7 @@ extern crate i2cdev;
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::*;
 
-#[cfg(any(target_os = "linux", taret_os = "android"))]
+#[cfg(any(target_os = "linux", target_os = "android"))]
 mod nunchuck {
     use std::error::Error;
     use std::fmt;
