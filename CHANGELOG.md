@@ -8,6 +8,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Updated nix to version `0.24`; only use the `ioctl` feature.
 
 ## [v0.5.1] - 2021-11-22
 
