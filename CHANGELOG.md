@@ -9,6 +9,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 - Updated nix to version `0.24`; only use the `ioctl` feature.
+- Use `File.read_exact` instead of `File.read` in `LinuxI2CDevice.read` so that the buffer is filled.
 
 ## [v0.5.1] - 2021-11-22
 

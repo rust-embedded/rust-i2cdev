@@ -175,7 +175,7 @@ impl I2CDevice for LinuxI2CDevice {
 
     /// Read data from the device to fill the provided slice
     fn read(&mut self, data: &mut [u8]) -> Result<(), LinuxI2CError> {
-        self.devfile.read(data).map_err(From::from).map(drop)
+        self.devfile.read_exact(data).map_err(From::from).map(drop)
     }
 
     /// Write the provided buffer to the device
