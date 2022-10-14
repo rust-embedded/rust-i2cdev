@@ -69,9 +69,9 @@ impl fmt::Display for LinuxI2CError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
             LinuxI2CError::Errno(e) => {
-		let error = nix::Error::from_i32(e);
-		fmt::Display::fmt(&error, f)
-	    },
+                let error = nix::Error::from_i32(e);
+                fmt::Display::fmt(&error, f)
+            }
             LinuxI2CError::Io(ref e) => fmt::Display::fmt(e, f),
         }
     }
