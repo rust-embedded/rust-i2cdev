@@ -33,18 +33,24 @@ pub struct LinuxI2CBus {
     devfile: File,
 }
 
+/// Linux Errno error.
+#[derive(Debug)]
+pub struct Errno {
+    nix: nix::Error,
+}
+
 /// Linux I2C errors
 #[derive(Debug)]
 pub enum LinuxI2CError {
     /// OS error
-    Nix(nix::Error),
+    Errno(Errno),
     /// Input/output error
     Io(io::Error),
 }
 
 impl From<nix::Error> for LinuxI2CError {
     fn from(e: nix::Error) -> Self {
-        LinuxI2CError::Nix(e)
+        LinuxI2CError::Errno(Errno { nix: e })
     }
 }
 
@@ -58,7 +64,7 @@ impl From<LinuxI2CError> for io::Error {
     fn from(e: LinuxI2CError) -> io::Error {
         match e {
             LinuxI2CError::Io(e) => e,
-            LinuxI2CError::Nix(e) => e.into(),
+            LinuxI2CError::Errno(e) => e.nix.into(),
         }
     }
 }
@@ -66,7 +72,7 @@ impl From<LinuxI2CError> for io::Error {
 impl fmt::Display for LinuxI2CError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            LinuxI2CError::Nix(ref e) => fmt::Display::fmt(e, f),
+            LinuxI2CError::Errno(ref e) => fmt::Display::fmt(&e.nix, f),
             LinuxI2CError::Io(ref e) => fmt::Display::fmt(e, f),
         }
     }
@@ -76,7 +82,7 @@ impl Error for LinuxI2CError {
     fn cause(&self) -> Option<&dyn Error> {
         match *self {
             LinuxI2CError::Io(ref e) => Some(e),
-            LinuxI2CError::Nix(ref e) => Some(e),
+            LinuxI2CError::Errno(ref e) => Some(&e.nix),
         }
     }
 }

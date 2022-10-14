@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Hide nix from the public api such that it can be updated without resulting in a breaking change.
+- Updated nix to version `0.25`.
 - Updated nix to version `0.24`; only use the `ioctl` feature.
 - Use `File.read_exact` instead of `File.read` in `LinuxI2CDevice.read` so that the buffer is filled.
 
