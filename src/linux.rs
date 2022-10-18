@@ -36,9 +36,17 @@ pub struct LinuxI2CBus {
 /// Linux I2C errors
 #[derive(Debug)]
 pub enum LinuxI2CError {
-    /// Errno from a failing libc call. Sourced  from `nix`.
+    /// Errno from a failing `libc` call. Sourced  from [`nix`].
     ///
-    /// To interpret this value `nix::Error::from_i32` should be used.
+    /// To interpret this value [`nix::errno::from_i32`] should be used.
+    ///
+    /// The [`Error`] implementation will return nor return a source
+    /// for this variant. And similar will the [`Error`]
+    /// implementation of `nix`'s error.
+    ///
+    /// [`nix`]: https://docs.rs/nix/latest/nix/
+    /// [`nix::errno::from_i32`]: https://docs.rs/nix/latest/nix/errno/fn.from_i32.html
+    /// [`Error`]: https://doc.rust-lang.org/std/error/trait.Error.html
     Errno(i32),
     /// Input/output error
     Io(io::Error),
