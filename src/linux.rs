@@ -40,9 +40,8 @@ pub enum LinuxI2CError {
     ///
     /// To interpret this value [`nix::errno::from_i32`] should be used.
     ///
-    /// The [`Error`] implementation will return nor return a source
-    /// for this variant. And similar will the [`Error`]
-    /// implementation of `nix`'s error.
+    /// The [`Error`] implementation will not return a source
+    /// for this variant, like the [`Error`] implementation of the underlying `nix` error.
     ///
     /// [`nix`]: https://docs.rs/nix/latest/nix/
     /// [`nix::errno::from_i32`]: https://docs.rs/nix/latest/nix/errno/fn.from_i32.html
