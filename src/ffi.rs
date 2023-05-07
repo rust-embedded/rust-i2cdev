@@ -12,6 +12,7 @@
 use byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
 use nix;
 use std::io::Cursor;
+use std::marker::PhantomData;
 use std::mem;
 use std::os::unix::prelude::*;
 use std::ptr;
@@ -19,7 +20,7 @@ use std::ptr;
 pub type I2CError = nix::Error;
 
 #[repr(C)]
-pub struct i2c_msg {
+pub struct i2c_msg<'a> {
     /// slave address
     pub(crate) addr: u16,
     /// serialized I2CMsgFlags
@@ -28,6 +29,8 @@ pub struct i2c_msg {
     pub(crate) len: u16,
     /// pointer to msg data
     pub(crate) buf: *const u8,
+
+    pub(crate) _p: PhantomData<&'a mut [u8]>,
 }
 
 bitflags! {
@@ -143,9 +146,9 @@ pub struct i2c_smbus_ioctl_data {
 /// This is the structure as used in the I2C_RDWR ioctl call
 // see linux/i2c-dev.h
 #[repr(C)]
-pub struct i2c_rdwr_ioctl_data {
+pub struct i2c_rdwr_ioctl_data<'a> {
     // struct i2c_msg __user *msgs;
-    msgs: *mut i2c_msg,
+    msgs: *mut i2c_msg<'a>,
     // __u32 nmsgs;
     nmsgs: u32,
 }

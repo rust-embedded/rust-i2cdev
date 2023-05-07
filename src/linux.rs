@@ -15,6 +15,7 @@ use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;
+use std::marker::PhantomData;
 use std::os::unix::prelude::*;
 use std::path::Path;
 
@@ -316,7 +317,7 @@ impl LinuxI2CBus {
 }
 
 /// Linux I2C message
-pub type LinuxI2CMessage<'a> = ffi::i2c_msg;
+pub type LinuxI2CMessage<'a> = ffi::i2c_msg<'a>;
 
 impl<'a> I2CTransfer<'a> for LinuxI2CBus {
     type Error = LinuxI2CError;
@@ -354,21 +355,23 @@ bitflags! {
 }
 
 impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
-    fn read(data: &'a mut [u8]) -> LinuxI2CMessage {
+    fn read(data: &'a mut [u8]) -> LinuxI2CMessage<'a> {
         Self {
             addr: 0, // will be filled later
             flags: I2CMessageFlags::READ.bits(),
             len: data.len() as u16,
             buf: data.as_ptr(),
+            _p: PhantomData,
         }
     }
 
-    fn write(data: &'a [u8]) -> LinuxI2CMessage {
+    fn write(data: &'a [u8]) -> LinuxI2CMessage<'a> {
         Self {
             addr: 0, // will be filled later
             flags: I2CMessageFlags::empty().bits(),
             len: data.len() as u16,
             buf: data.as_ptr(),
+            _p: PhantomData,
         }
     }
 }
@@ -381,6 +384,7 @@ impl<'a> LinuxI2CMessage<'a> {
             flags: self.flags,
             len: self.len,
             buf: self.buf,
+            _p: PhantomData,
         }
     }
 
@@ -391,6 +395,7 @@ impl<'a> LinuxI2CMessage<'a> {
             flags: flags.bits(),
             len: self.len,
             buf: self.buf,
+            _p: PhantomData,
         }
     }
 }
