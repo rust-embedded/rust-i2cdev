@@ -19,6 +19,7 @@ use std::ptr;
 
 pub type I2CError = nix::Error;
 
+/// Linux I2C message
 #[repr(C)]
 pub struct i2c_msg<'a> {
     /// slave address

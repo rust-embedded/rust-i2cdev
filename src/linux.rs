@@ -316,8 +316,7 @@ impl LinuxI2CBus {
     }
 }
 
-/// Linux I2C message
-pub type LinuxI2CMessage<'a> = ffi::i2c_msg<'a>;
+pub use ffi::i2c_msg as LinuxI2CMessage;
 
 impl<'a> I2CTransfer<'a> for LinuxI2CBus {
     type Error = LinuxI2CError;
