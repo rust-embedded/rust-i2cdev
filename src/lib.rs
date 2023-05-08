@@ -45,9 +45,6 @@
 //! ```rust,no_run
 //! extern crate i2cdev;
 //!
-//! use std::thread;
-//! use std::time::Duration;
-//!
 //! use i2cdev::core::*;
 //! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError, LinuxI2CMessage};
 //!
@@ -70,9 +67,6 @@
 //!
 //! ```rust,no_run
 //! extern crate i2cdev;
-//!
-//! use std::thread;
-//! use std::time::Duration;
 //!
 //! use i2cdev::core::*;
 //! use i2cdev::linux::{LinuxI2CBus, LinuxI2CError, LinuxI2CMessage};
