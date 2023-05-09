@@ -9,9 +9,14 @@
 //! # i2cdev
 //!
 //! The `i2cdev` crate provides a safe interface for interface
-//! with i2c devices under Linux.  The API wraps the Linux
-//! kernel interface for interacting with i2c in userspace:
-//! https://www.kernel.org/doc/Documentation/i2c/dev-interface
+//! with i2c devices under Linux.  The API wraps the [Linux
+//! kernel interface for interacting with i2c in userspace][kernel-doc].
+//!
+//! [kernel-doc]: https://www.kernel.org/doc/Documentation/i2c/dev-interface
+//!
+//! ## Examples
+//!
+//! ### Using the SMBus methods to read from a Wii Nunchuk
 //! ```rust,no_run
 //! extern crate i2cdev;
 //!
@@ -42,11 +47,9 @@
 //! }
 //! ```
 //!
+//! ### Using the `transfer` API with an individual device
 //! ```rust,no_run
 //! extern crate i2cdev;
-//!
-//! use std::thread;
-//! use std::time::Duration;
 //!
 //! use i2cdev::core::*;
 //! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError, LinuxI2CMessage};
@@ -68,11 +71,9 @@
 //! }
 //! ```
 //!
+//! ### Using `transfer` with `LinuxI2CBus`
 //! ```rust,no_run
 //! extern crate i2cdev;
-//!
-//! use std::thread;
-//! use std::time::Duration;
 //!
 //! use i2cdev::core::*;
 //! use i2cdev::linux::{LinuxI2CBus, LinuxI2CError, LinuxI2CMessage};
