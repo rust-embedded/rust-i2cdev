@@ -20,7 +20,7 @@ jobs:
 
         include:
           # Test MSRV
-          - rust: 1.46.0
+          - rust: 1.60.0
             TARGET: x86_64-unknown-linux-gnu
 
           # Test nightly but don't fail
@@ -61,7 +61,7 @@ jobs:
 
     strategy:
       matrix:
-        rust: [stable, 1.46.0]
+        rust: [stable, 1.60.0]
         TARGET: [x86_64-apple-darwin]
 
     steps:
