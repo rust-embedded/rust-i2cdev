@@ -12,7 +12,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - Updated nix to version `0.25`.
 - Updated nix to version `0.24`; only use the `ioctl` feature.
 - Use `File.read_exact` instead of `File.read` in `LinuxI2CDevice.read` so that the buffer is filled.
-- Fix the lifetime parameter on LinuxI2CMessage to ensure that it does not outlive the buffer it points to.
+- Fix the lifetime parameter on `LinuxI2CMessage` to ensure that it does not outlive the buffer it points to.
 - Updated MSRV to 1.60.0.
 
 ## [v0.5.1] - 2021-11-22
