@@ -3,6 +3,7 @@
 [![Build Status](https://github.com/rust-embedded/rust-i2cdev/workflows/CI/badge.svg)](https://github.com/rust-embedded/rust-i2cdev/actions)
 [![Version](https://img.shields.io/crates/v/i2cdev.svg)](https://crates.io/crates/i2cdev)
 [![License](https://img.shields.io/crates/l/i2cdev.svg)](https://github.com/rust-embedded/rust-i2cdev/blob/master/README.md#license)
+![Minimum Supported Rust Version](https://img.shields.io/badge/rustc-1.60+-blue.svg)
 
 [Documentation](https://docs.rs/i2cdev)
 
@@ -49,7 +50,7 @@ The following features are implemented and planned for the library:
 
 Most likely, the machine you are running on is not your development
 machine (although it could be).  In those cases, you will need to
-cross-compile.  See https://github.com/japaric/rust-cross for pointers.
+cross-compile.  See <https://github.com/cross-rs/cross> for pointers.
 
 ## Minimum Supported Rust Version (MSRV)
 
