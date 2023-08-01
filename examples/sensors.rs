@@ -285,9 +285,8 @@ mod sensors {
             // If values are less than 16 bytes, need to adjust
             let extrabits = 16 - integer_bits - fractional_bits - 1;
             let rawval: i16 = BigEndian::read_i16(&[msb, lsb]);
-            let adj = (f32::from(rawval) / 2_f32.powi(fractional_bits + extrabits))
-                / 10_f32.powi(dec_pt_zero_pad);
-            adj
+            (f32::from(rawval) / 2_f32.powi(fractional_bits + extrabits))
+                / 10_f32.powi(dec_pt_zero_pad)
         }
 
         impl MPL115A2Coefficients {

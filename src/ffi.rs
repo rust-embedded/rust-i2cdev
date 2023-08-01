@@ -354,7 +354,7 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, I2C
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
     let count = data.block[0];
-    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+    Ok((data.block[1..(count + 1) as usize]).to_vec())
 }
 
 pub fn i2c_smbus_read_i2c_block_data(
@@ -377,7 +377,7 @@ pub fn i2c_smbus_read_i2c_block_data(
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
     let count = data.block[0];
-    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+    Ok((data.block[1..(count + 1) as usize]).to_vec())
 }
 
 #[inline]
@@ -445,7 +445,7 @@ pub fn i2c_smbus_process_call_block(
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
     let count = data.block[0];
-    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+    Ok((data.block[1..(count + 1) as usize]).to_vec())
 }
 
 #[inline]
