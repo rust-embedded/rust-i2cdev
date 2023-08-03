@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [v0.6.0] - 2023-08-03
+
 - Hide nix from the public api such that it can be updated without resulting in a breaking change.
 - Updated nix to version `0.26`; only use the `ioctl` feature.
 - Updated `bitflags` to version `2.3`.
@@ -31,6 +33,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 The changelog for previous versions was not recorded.
 
-[Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.1...HEAD
+[Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.0...HEAD
+[v0.6.0]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.1...0.6.0
 [v0.5.1]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.0...0.5.1
 [v0.5.0]: https://github.com/rust-embedded/rust-i2cdev/compare/0.4.0...0.5.0
