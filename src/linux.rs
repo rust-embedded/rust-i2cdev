@@ -301,7 +301,7 @@ impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
     /// Issue the provided sequence of I2C transactions
     fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
         for msg in messages.iter_mut() {
-            (*msg).addr = self.slave_address;
+            msg.addr = self.slave_address;
         }
         ffi::i2c_rdwr(self.as_raw_fd(), messages).map_err(From::from)
     }

@@ -31,31 +31,21 @@ jobs:
             TARGET: x86_64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
-          override: true
 
       - name: Install armv7 libraries
         if: ${{ matrix.TARGET == 'armv7-unknown-linux-gnueabihf' }}
-        run: sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
+        run: sudo apt-get update && sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
 
-      - uses: actions-rs/cargo@v1
+      - run: cargo test --target=${{ matrix.TARGET }}
         if: ${{ matrix.TARGET != 'armv7-unknown-linux-gnueabihf' }}
-        with:
-          command: test
-          args: --target=${{ matrix.TARGET }}
 
-
-      - uses: actions-rs/cargo@v1
+      - run: cargo build --target=${{ matrix.TARGET }}
         if: ${{ matrix.TARGET == 'armv7-unknown-linux-gnueabihf' }}
-        with:
-          command: build
-          args: --target=${{ matrix.TARGET }}
 
   ci-macos:
     name: CI-macOS
@@ -67,16 +57,10 @@ jobs:
         TARGET: [x86_64-apple-darwin]
 
     steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
-          override: true
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --target=${{ matrix.TARGET }}
+      - run: cargo build --target=${{ matrix.TARGET }}

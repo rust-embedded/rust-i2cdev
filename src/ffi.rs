@@ -55,24 +55,24 @@ bitflags! {
         const I2C_FUNC_SMBUS_READ_I2C_BLOCK = 0x0400_0000; /* I2C-like block xfer  */
         const I2C_FUNC_SMBUS_WRITE_I2C_BLOCK = 0x0800_0000; /* w/ 1-byte reg. addr. */
 
-        const I2C_FUNC_SMBUS_BYTE = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE.bits);
-        const I2C_FUNC_SMBUS_BYTE_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE_DATA.bits |
-                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE_DATA.bits);
-        const I2C_FUNC_SMBUS_WORD_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_WORD_DATA.bits |
-                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_WORD_DATA.bits);
-        const I2C_FUNC_SMBUS_BLOCK_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_BLOCK_DATA.bits |
-                                           I2CFunctions::I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits);
-        const I2C_FUNC_SMBUS_I2C_BLOCK = (I2CFunctions::I2C_FUNC_SMBUS_READ_I2C_BLOCK.bits |
-                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_I2C_BLOCK.bits);
-        const I2C_FUNC_SMBUS_EMUL = (I2CFunctions::I2C_FUNC_SMBUS_QUICK.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_BYTE.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_BYTE_DATA.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_WORD_DATA.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_PROC_CALL.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_I2C_BLOCK.bits |
-                                     I2CFunctions::I2C_FUNC_SMBUS_PEC.bits);
+        const I2C_FUNC_SMBUS_BYTE = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE.bits());
+        const I2C_FUNC_SMBUS_BYTE_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_BYTE_DATA.bits() |
+                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_BYTE_DATA.bits());
+        const I2C_FUNC_SMBUS_WORD_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_WORD_DATA.bits() |
+                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_WORD_DATA.bits());
+        const I2C_FUNC_SMBUS_BLOCK_DATA = (I2CFunctions::I2C_FUNC_SMBUS_READ_BLOCK_DATA.bits() |
+                                           I2CFunctions::I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits());
+        const I2C_FUNC_SMBUS_I2C_BLOCK = (I2CFunctions::I2C_FUNC_SMBUS_READ_I2C_BLOCK.bits() |
+                                          I2CFunctions::I2C_FUNC_SMBUS_WRITE_I2C_BLOCK.bits());
+        const I2C_FUNC_SMBUS_EMUL = (I2CFunctions::I2C_FUNC_SMBUS_QUICK.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_BYTE.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_BYTE_DATA.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_WORD_DATA.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_PROC_CALL.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_WRITE_BLOCK_DATA.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_I2C_BLOCK.bits() |
+                                     I2CFunctions::I2C_FUNC_SMBUS_PEC.bits());
     }
 }
 
@@ -354,7 +354,7 @@ pub fn i2c_smbus_read_block_data(fd: RawFd, register: u8) -> Result<Vec<u8>, I2C
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
     let count = data.block[0];
-    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+    Ok((data.block[1..(count + 1) as usize]).to_vec())
 }
 
 pub fn i2c_smbus_read_i2c_block_data(
@@ -377,7 +377,7 @@ pub fn i2c_smbus_read_i2c_block_data(
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
     let count = data.block[0];
-    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+    Ok((data.block[1..(count + 1) as usize]).to_vec())
 }
 
 #[inline]
@@ -445,7 +445,7 @@ pub fn i2c_smbus_process_call_block(
     // create a vector from the data in the block starting at byte
     // 1 and ending after count bytes after that
     let count = data.block[0];
-    Ok((&data.block[1..(count + 1) as usize]).to_vec())
+    Ok((data.block[1..(count + 1) as usize]).to_vec())
 }
 
 #[inline]

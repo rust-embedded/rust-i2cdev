@@ -58,13 +58,13 @@ mod nunchuck {
 
     #[derive(Debug)]
     pub struct NunchuckReading {
-        joystick_x: u8,
-        joystick_y: u8,
-        accel_x: u16, // 10-bit
-        accel_y: u16, // 10-bit
-        accel_z: u16, // 10-bit
-        c_button_pressed: bool,
-        z_button_pressed: bool,
+        pub joystick_x: u8,
+        pub joystick_y: u8,
+        pub accel_x: u16, // 10-bit
+        pub accel_y: u16, // 10-bit
+        pub accel_z: u16, // 10-bit
+        pub c_button_pressed: bool,
+        pub z_button_pressed: bool,
     }
 
     impl NunchuckReading {
