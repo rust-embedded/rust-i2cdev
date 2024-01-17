@@ -156,3 +156,15 @@ where
         Ok(messages.len() as u32)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_can_read_at_zero_offset() {
+        let mut mock_device = MockI2CDevice::new();
+        mock_device.regmap.write_regs(0x0, &[0x1u8; 4]);
+        mock_device.read(&mut [0x0u8; 4]).unwrap();
+    }
+}
