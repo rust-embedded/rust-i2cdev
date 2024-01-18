@@ -8,6 +8,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Prevent underflow panics when using a `MockI2CDevice` with an offset of `0x0`
+- Bumps the MSRV to 1.65.0
+
 ## [v0.6.0] - 2023-08-03
 
 - Hide nix from the public api such that it can be updated without resulting in a breaking change.
