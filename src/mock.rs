@@ -6,6 +6,7 @@
 // option.  This file may not be copied, modified, or distributed
 // except according to those terms.
 use core::{I2CDevice, I2CMessage, I2CTransfer};
+use std::convert::TryFrom;
 use std::io;
 
 /// I2C mock result type
@@ -44,7 +45,12 @@ impl I2CRegisterMap {
     fn read(&mut self, data: &mut [u8]) -> I2CResult<()> {
         let len = data.len();
         data.clone_from_slice(&self.registers[self.offset..(self.offset + len)]);
-        println!("READ  | 0x{:X} : {:?}", self.offset - data.len(), data);
+        println!(
+            "READ  | 0x{:X} : {:?}",
+            isize::try_from(self.offset).unwrap_or(0xBAD)
+                - isize::try_from(data.len()).unwrap_or(0xBAD),
+            data
+        );
         Ok(())
     }
 
@@ -154,5 +160,17 @@ where
             }
         }
         Ok(messages.len() as u32)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_can_read_at_zero_offset() {
+        let mut mock_device = MockI2CDevice::new();
+        mock_device.regmap.write_regs(0x0, &[0x1u8; 4]);
+        mock_device.read(&mut [0x0u8; 4]).unwrap();
     }
 }
