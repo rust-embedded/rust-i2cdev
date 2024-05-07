@@ -301,7 +301,7 @@ impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
     /// Issue the provided sequence of I2C transactions
     fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
         let msg_type = |flag: u16| flag & I2CMessageFlags::READ.bits();
-        let mut prev_msg_type = messages.first().map(|m| msg_type(m.flags));
+        let mut prev_msg_type = None;
         for msg in messages.iter_mut() {
             msg.addr = self.slave_address;
 
