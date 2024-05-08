@@ -300,8 +300,20 @@ impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
 
     /// Issue the provided sequence of I2C transactions
     fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+        let msg_type = |flag: u16| flag & I2CMessageFlags::READ.bits();
+        let mut prev_msg_type = None;
         for msg in messages.iter_mut() {
             msg.addr = self.slave_address;
+
+            let cur_msg_type = msg_type(msg.flags);
+            if prev_msg_type
+                .map(|prev| prev == cur_msg_type)
+                .unwrap_or_default()
+            {
+                msg.flags |= I2CMessageFlags::NO_START.bits();
+            } else {
+                prev_msg_type = Some(cur_msg_type);
+            }
         }
         ffi::i2c_rdwr(self.as_raw_fd(), messages).map_err(From::from)
     }
