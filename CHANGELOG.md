@@ -8,6 +8,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [v0.6.1] - 2024-05-09
+
+- Properly ellide the start bit when sending a series of I2C messages as a
+  transaction.
 - Prevent underflow panics when using a `MockI2CDevice` with an offset of `0x0`
 - Bumps the MSRV to 1.65.0
 
@@ -36,7 +40,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 The changelog for previous versions was not recorded.
 
-[Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.1...HEAD
+[v0.6.1]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.0...0.6.1
 [v0.6.0]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.1...0.6.0
 [v0.5.1]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.0...0.5.1
 [v0.5.0]: https://github.com/rust-embedded/rust-i2cdev/compare/0.4.0...0.5.0
