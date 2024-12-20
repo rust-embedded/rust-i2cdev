@@ -137,7 +137,7 @@ pub trait I2CTransfer<'a> {
     /// Performs multiple serially chained I2C read/write transactions.  On
     /// success the return code is the number of successfully executed
     /// transactions
-    fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, Self::Error>;
+    fn transfer(&mut self, msgs: &mut [Self::Message]) -> Result<u32, Self::Error>;
 }
 
 /// Read/Write I2C message

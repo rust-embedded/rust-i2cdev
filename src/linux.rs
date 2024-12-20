@@ -299,7 +299,7 @@ impl<'a> I2CTransfer<'a> for LinuxI2CDevice {
     type Message = LinuxI2CMessage<'a>;
 
     /// Issue the provided sequence of I2C transactions
-    fn transfer(&mut self, messages: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+    fn transfer(&mut self, messages: &mut [Self::Message]) -> Result<u32, LinuxI2CError> {
         let msg_type = |flag: u16| flag & I2CMessageFlags::READ.bits();
         let mut prev_msg_type = None;
         for msg in messages.iter_mut() {
@@ -335,7 +335,7 @@ impl<'a> I2CTransfer<'a> for LinuxI2CBus {
     type Message = LinuxI2CMessage<'a>;
 
     /// Issue the provided sequence of I2C transactions
-    fn transfer(&mut self, msgs: &'a mut [Self::Message]) -> Result<u32, LinuxI2CError> {
+    fn transfer(&mut self, msgs: &mut [Self::Message]) -> Result<u32, LinuxI2CError> {
         ffi::i2c_rdwr(self.as_raw_fd(), msgs).map_err(From::from)
     }
 }

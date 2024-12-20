@@ -49,7 +49,7 @@ jobs:
 
   ci-macos:
     name: CI-macOS
-    runs-on: macos-11
+    runs-on: macos-14
 
     strategy:
       matrix:

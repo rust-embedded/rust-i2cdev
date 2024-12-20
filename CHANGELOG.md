@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Relax lifetime constraint on `I2CTransfer::transfer` `msgs` reference
+
 ## [v0.6.1] - 2024-05-09
 
 - Properly ellide the start bit when sending a series of I2C messages as a
