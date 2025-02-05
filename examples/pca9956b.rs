@@ -10,13 +10,12 @@ extern crate docopt;
 extern crate i2cdev;
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use i2cdev::core::{I2CMessage, I2CTransfer};
+use i2cdev::{
+    core::{I2CMessage, I2CTransfer},
+    linux::{LinuxI2CBus, LinuxI2CMessage},
+};
+
 #[cfg(any(target_os = "linux", target_os = "android"))]
-use i2cdev::linux::{LinuxI2CBus, LinuxI2CMessage};
-
-use docopt::Docopt;
-use std::env::args;
-
 const USAGE: &str = "
 Reads registers from a PCA9956B IC via Linux i2cdev.
 
@@ -32,6 +31,7 @@ Options:
   --version    Show version.
 ";
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 const ADDR: u16 = 0x20;
 
 #[cfg(not(any(target_os = "linux", target_os = "android")))]
@@ -39,6 +39,9 @@ fn main() {}
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 fn main() {
+    use docopt::Docopt;
+    use std::env::args;
+
     let args = Docopt::new(USAGE)
         .and_then(|d| d.argv(args()).parse())
         .unwrap_or_else(|e| e.exit());
