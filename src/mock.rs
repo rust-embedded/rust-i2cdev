@@ -13,6 +13,7 @@ use std::io;
 pub type I2CResult<T> = io::Result<T>;
 
 /// Mock I2C device register map
+#[derive(Debug, Clone, Copy)]
 pub struct I2CRegisterMap {
     registers: [u8; 0xFF],
     offset: usize,
@@ -67,7 +68,7 @@ impl I2CRegisterMap {
 }
 
 /// Mock I2C device exposing a register map
-#[derive(Default)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct MockI2CDevice {
     /// I2C register map
     pub regmap: I2CRegisterMap,

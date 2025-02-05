@@ -8,7 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-- Relax lifetime constraint on `I2CTransfer::transfer` `msgs` reference
+- Relax lifetime constraint on `I2CTransfer::transfer` `msgs` reference.
+- Derived common traits for public types.
 
 ## [v0.6.1] - 2024-05-09
 

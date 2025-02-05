@@ -23,6 +23,7 @@ use std::path::Path;
 pub use core::I2CMessage;
 
 /// Concrete linux I2C device
+#[derive(Debug)]
 pub struct LinuxI2CDevice {
     devfile: File,
     slave_address: u16,
@@ -30,6 +31,7 @@ pub struct LinuxI2CDevice {
 }
 
 /// Linux I2C bus
+#[derive(Debug)]
 pub struct LinuxI2CBus {
     devfile: File,
 }
