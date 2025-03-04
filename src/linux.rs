@@ -389,7 +389,7 @@ impl<'a> I2CMessage<'a> for LinuxI2CMessage<'a> {
     }
 }
 
-impl<'a> LinuxI2CMessage<'a> {
+impl LinuxI2CMessage<'_> {
     /// Set the target device address for the message
     pub fn with_address(self, slave_address: u16) -> Self {
         Self {
