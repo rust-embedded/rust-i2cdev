@@ -17,13 +17,15 @@ extern crate byteorder;
 extern crate docopt;
 extern crate i2cdev;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use docopt::Docopt;
-use sensors::adxl345_accelerometer::*;
-use sensors::mpl115a2_barometer::*;
-use sensors::{Accelerometer, Barometer, Thermometer};
-use std::env::args;
-use std::thread;
-use std::time::Duration;
+#[cfg(any(target_os = "linux", target_os = "android"))]
+use sensors::{
+    adxl345_accelerometer::*, mpl115a2_barometer::*, Accelerometer, Barometer, Thermometer,
+};
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+use std::{env::args, thread, time::Duration};
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use i2cdev::linux::*;

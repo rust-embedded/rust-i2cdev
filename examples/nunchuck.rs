@@ -57,6 +57,7 @@ mod nunchuck {
     // TODO: Move Nunchuck code out to be an actual sensor and add tests
 
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct NunchuckReading {
         pub joystick_x: u8,
         pub joystick_y: u8,
@@ -186,9 +187,12 @@ mod nunchuck {
 #[cfg(any(target_os = "linux", target_os = "android"))]
 use nunchuck::*;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use docopt::Docopt;
+#[cfg(any(target_os = "linux", target_os = "android"))]
 use std::env::args;
 
+#[cfg(any(target_os = "linux", target_os = "android"))]
 const USAGE: &str = "
 Reading Wii Nunchuck data via Linux i2cdev.
 
