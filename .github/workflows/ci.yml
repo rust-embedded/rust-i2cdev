@@ -54,7 +54,7 @@ jobs:
     strategy:
       matrix:
         rust: [stable, 1.65.0]
-        TARGET: [x86_64-apple-darwin]
+        TARGET: [x86_64-apple-darwin, aarch64-apple-darwin]
 
     steps:
       - uses: actions/checkout@v3
@@ -64,3 +64,4 @@ jobs:
           target: ${{ matrix.TARGET }}
 
       - run: cargo build --target=${{ matrix.TARGET }}
+      - run: cargo test --target=${{ matrix.TARGET }}
