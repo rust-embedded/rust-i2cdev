@@ -24,11 +24,13 @@
 //! use std::time::Duration;
 //!
 //! use i2cdev::core::*;
+//! #[cfg(any(target_os = "linux", target_os = "android"))]
 //! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
 //!
 //! const NUNCHUCK_SLAVE_ADDR: u16 = 0x52;
 //!
 //! // real code should probably not use unwrap()
+//! #[cfg(any(target_os = "linux", target_os = "android"))]
 //! fn i2cfun() -> Result<(), LinuxI2CError> {
 //!     let mut dev = LinuxI2CDevice::new("/dev/i2c-1", NUNCHUCK_SLAVE_ADDR)?;
 //!
@@ -52,10 +54,12 @@
 //! extern crate i2cdev;
 //!
 //! use i2cdev::core::*;
+//! #[cfg(any(target_os = "linux", target_os = "android"))]
 //! use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError, LinuxI2CMessage};
 //!
 //! const SLAVE_ADDR: u16 = 0x57;
 //!
+//! #[cfg(any(target_os = "linux", target_os = "android"))]
 //! fn write_read_transaction() -> Result<(), LinuxI2CError> {
 //!     let mut dev = LinuxI2CDevice::new("/dev/i2c-1", SLAVE_ADDR)?;
 //!
@@ -76,10 +80,12 @@
 //! extern crate i2cdev;
 //!
 //! use i2cdev::core::*;
+//! #[cfg(any(target_os = "linux", target_os = "android"))]
 //! use i2cdev::linux::{LinuxI2CBus, LinuxI2CError, LinuxI2CMessage};
 //!
 //! const SLAVE_ADDR: u16 = 0x57;
 //!
+//! #[cfg(any(target_os = "linux", target_os = "android"))]
 //! fn write_read_transaction_using_bus() -> Result<(), LinuxI2CError> {
 //!     let mut dev = LinuxI2CBus::new("/dev/i2c-1")?;
 //!
