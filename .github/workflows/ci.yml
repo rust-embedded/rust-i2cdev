@@ -14,14 +14,11 @@ jobs:
 
     strategy:
       matrix:
-        # All generated code should be running on stable now
         rust: [stable]
-
-        # The default target we're compiling on and for
         TARGET: [x86_64-unknown-linux-gnu, armv7-unknown-linux-gnueabihf]
 
         include:
-          # Test MSRV
+          # Build on MSRV
           - rust: 1.65.0
             TARGET: x86_64-unknown-linux-gnu
 
@@ -31,7 +28,7 @@ jobs:
             TARGET: x86_64-unknown-linux-gnu
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
@@ -41,11 +38,12 @@ jobs:
         if: ${{ matrix.TARGET == 'armv7-unknown-linux-gnueabihf' }}
         run: sudo apt-get update && sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
 
-      - run: cargo test --target=${{ matrix.TARGET }}
-        if: ${{ matrix.TARGET != 'armv7-unknown-linux-gnueabihf' }}
-
       - run: cargo build --target=${{ matrix.TARGET }}
         if: ${{ matrix.TARGET == 'armv7-unknown-linux-gnueabihf' }}
+
+      # We do not run tests on MSRV because of requirements of the additional dependencies
+      - run: cargo test --target=${{ matrix.TARGET }}
+        if: ${{ matrix.TARGET != 'armv7-unknown-linux-gnueabihf' && matrix.rust != '1.65.0' }}
 
   ci-macos:
     name: CI-macOS
@@ -57,11 +55,13 @@ jobs:
         TARGET: [x86_64-apple-darwin, aarch64-apple-darwin]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.TARGET }}
 
       - run: cargo build --target=${{ matrix.TARGET }}
+      # We do not run tests on MSRV because of requirements of the additional dependencies
       - run: cargo test --target=${{ matrix.TARGET }}
+        if: ${{ matrix.rust != '1.65.0'}}
