@@ -8,6 +8,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+
+## [v0.6.2] - 2025-11-10
+
 - Relax lifetime constraint on `I2CTransfer::transfer` `msgs` reference.
 - Derived common traits for public types.
 
@@ -43,7 +46,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 The changelog for previous versions was not recorded.
 
-[Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.1...HEAD
+[Unreleased]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.2...HEAD
+[v0.6.1]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.1...0.6.2
 [v0.6.1]: https://github.com/rust-embedded/rust-i2cdev/compare/0.6.0...0.6.1
 [v0.6.0]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.1...0.6.0
 [v0.5.1]: https://github.com/rust-embedded/rust-i2cdev/compare/0.5.0...0.5.1
