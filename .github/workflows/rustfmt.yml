@@ -12,9 +12,9 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.71.0
+          toolchain: 1.91.1
           components: rustfmt
       - run: cargo fmt --all -- --check

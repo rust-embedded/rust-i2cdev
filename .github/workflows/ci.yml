@@ -39,7 +39,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
 
       - run: cargo build --target=${{ matrix.TARGET }}
-        if: ${{ matrix.TARGET == 'armv7-unknown-linux-gnueabihf' }}
 
       # We do not run tests on MSRV because of requirements of the additional dependencies
       - run: cargo test --target=${{ matrix.TARGET }}
